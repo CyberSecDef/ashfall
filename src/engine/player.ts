@@ -4,7 +4,7 @@
 import type { InputState } from './input';
 import type { Terrain } from './terrain';
 
-export type PlayerMode = 'idle' | 'walk' | 'run' | 'crawl' | 'air';
+export type PlayerMode = 'idle' | 'walk' | 'run' | 'crawl' | 'air' | 'climb';
 
 export const PLAYER = {
   height: 1.1,
@@ -16,7 +16,7 @@ export const PLAYER = {
   /** Seconds of holding a direction before walking turns into a run. */
   runAfter: 1.4,
   accel: 9,
-  airAccel: 4,
+  airAccel: 7,
   gravity: 22,
   jumpSpeed: 5.6,
   /** Steepest walkable slope (rise over run). About 50 degrees. */
@@ -27,6 +27,12 @@ export const PLAYER = {
   snapDown: 0.3,
   /** Grace period to still jump just after walking off an edge. */
   coyoteTime: 0.08,
+  /** Auto-scramble onto ledges up to about chest height when pushing into them. */
+  scrambleMax: 0.62,
+  /** Mid-air, the child can grab an edge up to this far above its feet. */
+  airGrabMax: 0.62,
+  /** Seconds a scramble takes. */
+  scrambleTime: 0.42,
 };
 
 export class Player {
@@ -43,6 +49,8 @@ export class Player {
   lastFall = 0;
 
   private holdTime = 0;
+  /** Active scramble: from, to, and progress 0..1. */
+  private climb: { x0: number; y0: number; x1: number; y1: number; t: number } | null = null;
   private sinceGrounded = 0;
   private jumpLatch = false;
 
@@ -51,7 +59,7 @@ export class Player {
     spawnX: number,
   ) {
     this.x = spawnX;
-    this.y = terrain.heightAt(spawnX);
+    this.y = this.floorAt(spawnX);
   }
 
   get crawling(): boolean {
@@ -62,8 +70,17 @@ export class Player {
     return this.crawling ? PLAYER.crawlHeight : PLAYER.height;
   }
 
+  /** Climb progress 0..1 while scrambling, for animation. */
+  get climbProgress(): number {
+    return this.climb?.t ?? 0;
+  }
+
   update(input: InputState, dt: number): void {
     const t = this.terrain;
+    if (this.climb) {
+      this.updateClimb(dt);
+      return;
+    }
     const dir = (input.right ? 1 : 0) - (input.left ? 1 : 0);
     if (dir !== 0) this.facing = dir as 1 | -1;
 
@@ -103,12 +120,15 @@ export class Player {
     const blocked = this.grounded ? rise > PLAYER.maxSlope * Math.max(dx, 0.02) + 0.02 : rise > 0.02;
     if (blocked) {
       this.vx = 0;
+      // Pushing into a ledge that is low enough (or within reach mid-air): scramble up.
+      if (dir !== 0 && !wantsCrawl && this.tryScramble(dir)) return;
     } else {
       this.x = nx;
     }
 
-    // Vertical.
-    const floor = t.heightAt(this.x);
+    // Vertical. The floor is the highest ground under the child's footprint, so
+    // a foot over a ledge's edge is enough to stand on it.
+    const floor = this.floorAt(this.x);
     if (this.grounded) {
       if (this.y - floor > PLAYER.snapDown) {
         this.leaveGround();
@@ -137,6 +157,60 @@ export class Player {
     else if (Math.abs(this.vx) < 0.05) this.mode = 'idle';
     else if (Math.abs(this.vx) > (PLAYER.walkSpeed + PLAYER.runSpeed) / 2) this.mode = 'run';
     else this.mode = 'walk';
+  }
+
+  /** Find the top of the wall in direction `dir` and start a scramble if it is in reach. */
+  private tryScramble(dir: 1 | -1 | number): boolean {
+    const t = this.terrain;
+    const reach = this.grounded ? PLAYER.scrambleMax : PLAYER.airGrabMax;
+    // Walk forward from the wall face until the ground levels out.
+    let x = this.x + dir * PLAYER.halfWidth;
+    let found = false;
+    for (let i = 0; i < 12; i++) {
+      const next = x + dir * 0.05;
+      if (Math.abs(t.heightAt(next) - t.heightAt(x)) < 0.05 * PLAYER.maxSlope) {
+        found = true;
+        break;
+      }
+      x = next;
+    }
+    if (!found) return false;
+    const topX = x + dir * (PLAYER.halfWidth + 0.05);
+    const topY = this.floorAt(topX);
+    const rise = topY - this.y;
+    if (rise < 0.03 || rise > reach) return false;
+    this.climb = { x0: this.x, y0: this.y, x1: topX, y1: topY, t: 0 };
+    this.vx = 0;
+    this.vy = 0;
+    this.grounded = false;
+    this.mode = 'climb';
+    return true;
+  }
+
+  private updateClimb(dt: number): void {
+    const c = this.climb!;
+    c.t = Math.min(1, c.t + dt / PLAYER.scrambleTime);
+    // Up first, then over the edge.
+    const up = Math.min(1, c.t / 0.65);
+    const over = Math.max(0, (c.t - 0.45) / 0.55);
+    const ease = (v: number) => v * v * (3 - 2 * v);
+    this.y = c.y0 + (c.y1 - c.y0) * ease(up);
+    this.x = c.x0 + (c.x1 - c.x0) * ease(over);
+    this.mode = 'climb';
+    if (c.t >= 1) {
+      this.climb = null;
+      this.grounded = true;
+      this.sinceGrounded = 0;
+      this.airPeakY = this.y;
+      this.lastFall = 0;
+      this.mode = 'idle';
+    }
+  }
+
+  floorAt(x: number): number {
+    const t = this.terrain;
+    const hw = PLAYER.halfWidth * 0.8;
+    return Math.max(t.heightAt(x - hw), t.heightAt(x), t.heightAt(x + hw));
   }
 
   private leaveGround(): void {

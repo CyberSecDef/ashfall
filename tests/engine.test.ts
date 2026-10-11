@@ -114,23 +114,47 @@ describe('Player', () => {
     const p = new Player(t, 1);
     run(p, { right: true }, 2);
     expect(p.grounded).toBe(true);
-    expect(p.y).toBeCloseTo(t.heightAt(p.x), 3);
+    expect(p.y).toBeCloseTo(p.floorAt(p.x), 3);
   });
 
-  it('is stopped by a ledge, and can jump onto it', () => {
-    const t = new Terrain([
+  const ledge = (h: number) =>
+    new Terrain([
       { x: 0, y: 0, sharp: true },
       { x: 5, y: 0, sharp: true },
-      { x: 5.05, y: 0.55, sharp: true },
-      { x: 10, y: 0.55, sharp: true },
+      { x: 5.05, y: h, sharp: true },
+      { x: 10, y: h, sharp: true },
     ]);
-    const p = new Player(t, 3);
+
+  it('auto-scrambles onto a chest-high ledge when pushing into it', () => {
+    const p = new Player(ledge(0.55), 3);
     run(p, { right: true }, 3);
-    expect(p.x).toBeLessThan(5);
-    run(p, { right: true, up: true }, 0.6);
-    run(p, { right: true }, 0.6);
     expect(p.x).toBeGreaterThan(5.05);
     expect(p.y).toBeCloseTo(0.55, 2);
+    expect(p.grounded).toBe(true);
+  });
+
+  it('is stopped by a higher ledge, and can jump and grab onto it', () => {
+    const p = new Player(ledge(1.0), 3);
+    run(p, { right: true }, 3);
+    expect(p.x).toBeLessThan(5);
+    run(p, { right: true, up: true }, 0.25);
+    run(p, { right: true }, 1.2);
+    expect(p.x).toBeGreaterThan(5.05);
+    expect(p.y).toBeCloseTo(1.0, 2);
+  });
+
+  it('cannot reach a ledge too high even with a jump', () => {
+    const p = new Player(ledge(1.6), 3);
+    run(p, { right: true }, 3);
+    run(p, { right: true, up: true }, 0.25);
+    run(p, { right: true }, 1.2);
+    expect(p.x).toBeLessThan(5);
+  });
+
+  it('does not scramble while crawling', () => {
+    const p = new Player(ledge(0.3), 3);
+    run(p, { right: true, down: true }, 4);
+    expect(p.x).toBeLessThan(5);
   });
 
   it('falls off an edge and records the drop', () => {
@@ -145,6 +169,16 @@ describe('Player', () => {
     expect(p.grounded).toBe(true);
     expect(p.y).toBeCloseTo(0);
     expect(p.lastFall).toBeGreaterThan(1.8);
+  });
+
+  it('can climb out of the sandbox ditch after falling in', () => {
+    const p = new Player(new Terrain(L00.path), 20);
+    run(p, { right: true }, 1.6); // walk in without jumping
+    expect(p.x).toBeGreaterThan(22);
+    expect(p.x).toBeLessThan(24);
+    expect(p.y).toBeLessThan(-0.3);
+    run(p, { right: true }, 2); // pushing into the far wall scrambles out
+    expect(p.x).toBeGreaterThan(24);
   });
 
   it('can traverse the whole sandbox using only right and jump', () => {

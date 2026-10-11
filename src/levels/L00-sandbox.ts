@@ -13,16 +13,16 @@ const path: PathPoint[] = [
   { x: 11, y: 1.4, surface: 'grass' },
   { x: 16, y: 0.8, surface: 'grass' },
   { x: 20, y: 0.2 },
-  // Ditch: jump it.
+  // Ditch: jump across it, or drop in and scramble out (0.55 m deep).
   { x: 22, y: 0.1, sharp: true },
-  { x: 22.4, y: -1.2, sharp: true },
-  { x: 23.6, y: -1.2, sharp: true },
+  { x: 22.1, y: -0.45, sharp: true },
+  { x: 23.9, y: -0.45, sharp: true },
   { x: 24, y: 0.1, sharp: true },
   { x: 28, y: 0.3, surface: 'concrete' },
-  // Ledge: about 0.55 m high, needs a jump.
+  // Ledge: about 1 m high, too tall to scramble; jump and grab the edge.
   { x: 31, y: 0.3, surface: 'concrete', sharp: true },
-  { x: 31.05, y: 0.85, surface: 'concrete', sharp: true },
-  { x: 36, y: 0.9, surface: 'concrete' },
+  { x: 31.05, y: 1.3, surface: 'concrete', sharp: true },
+  { x: 36, y: 1.3, surface: 'concrete' },
   // Long descent into a hollow, then a climb out.
   { x: 42, y: -0.6, surface: 'gravel' },
   { x: 47, y: -1.0, surface: 'dirt' },

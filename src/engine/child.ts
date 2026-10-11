@@ -137,6 +137,14 @@ export class ChildView {
         bodyTilt = -0.1;
         legA = p.vy > 0 ? 0.6 : 0.25;
         break;
+      case 'climb': {
+        // Hunch forward over the edge, one knee up.
+        const c = p.climbProgress;
+        bodyTilt = -0.55 * Math.sin(c * Math.PI);
+        bodyY = -0.08 * Math.sin(c * Math.PI);
+        legA = 0.9 * Math.sin(c * Math.PI);
+        break;
+      }
     }
 
     const k = 1 - Math.exp(-dt * 14);

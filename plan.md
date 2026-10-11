@@ -48,6 +48,7 @@ The spec is [ASHFALL-Game-Build-Handoff.md](ASHFALL-Game-Build-Handoff.md). This
   - Tests: 27 unit tests. The smoke run adds camera-hint and draw-call checks (19 draw calls for the full scene).
   - Faint god rays: additive light shafts among the mid-layer trees, pulsing slowly and lifting with lightning (`src/fx/godrays.ts`)
   - Smoke run green (19 draw calls), deployed
+  - Fix after owner feedback: the child got stuck in the sandbox ditch (1.3 m deep, jump reach 0.7 m). Added auto-scramble onto ledges up to about 0.6 m when holding toward them, a mid-air edge grab for higher ledges, a footprint-based floor (one foot on an edge counts), and stronger air control. The ditch is now 0.55 m deep and the sandbox ledge 1 m (jump and grab).
   - Deferred: the path visually bending toward or away from the camera (the spec marks it "may"). It fits better with M3's level data.
 
 ## In progress
