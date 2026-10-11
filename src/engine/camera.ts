@@ -1,14 +1,36 @@
-// Camera follow: lagged and eased, with a gentle look-ahead in the walking
-// direction. Pull-outs, push-ins and trigger hints arrive in M2/M3.
+// Cinematic follow camera: lagged and eased, with a gentle look-ahead in the
+// walking direction and a slight handheld drift. Level triggers (M3) call
+// hint() for slow pull-outs on big reveals and push-ins during tension.
 
 import type * as THREE from 'three';
 import type { Player } from './player';
 import { CAMERA } from './renderer';
 
+export interface CameraHint {
+  /** Distance multiplier: > 1 pulls out, < 1 pushes in. */
+  zoom?: number;
+  /** Extra height of the focus point, in meters. */
+  offsetY?: number;
+  /** Extra horizontal offset of the focus point, in meters. */
+  offsetX?: number;
+}
+
+const DEFAULT_HINT: Required<CameraHint> = { zoom: 1, offsetY: 0, offsetX: 0 };
+
 export class CameraRig {
   private x: number;
   private y: number;
   private lead = 0;
+  private time = 0;
+
+  private current = { ...DEFAULT_HINT };
+  private from = { ...DEFAULT_HINT };
+  private to = { ...DEFAULT_HINT };
+  private blend = 1;
+  private blendTime = 1;
+
+  /** Handheld drift amount, 0 to 1. */
+  drift = 1;
 
   constructor(
     private readonly camera: THREE.PerspectiveCamera,
@@ -19,16 +41,59 @@ export class CameraRig {
     this.apply();
   }
 
+  get distance(): number {
+    return CAMERA.distance * this.current.zoom;
+  }
+
+  /** Ease toward a framing over `seconds`. Omitted fields return to default. */
+  hint(h: CameraHint, seconds = 3): void {
+    this.from = { ...this.current };
+    this.to = { ...DEFAULT_HINT, ...h };
+    this.blend = 0;
+    this.blendTime = Math.max(0.01, seconds);
+  }
+
+  clearHint(seconds = 3): void {
+    this.hint({}, seconds);
+  }
+
+  /** Jump straight to the player (spawn, respawn, debug teleports). */
+  snap(p: Player): void {
+    this.lead = p.facing * 1.1;
+    this.x = p.x + this.lead;
+    this.y = p.y + CAMERA.height;
+    this.apply();
+  }
+
   update(p: Player, dt: number): void {
+    this.time += dt;
+    if (this.blend < 1) {
+      this.blend = Math.min(1, this.blend + dt / this.blendTime);
+      const t = this.blend * this.blend * (3 - 2 * this.blend); // smoothstep
+      for (const k of ['zoom', 'offsetY', 'offsetX'] as const) {
+        this.current[k] = this.from[k] + (this.to[k] - this.from[k]) * t;
+      }
+    }
+
     const targetLead = p.facing * (1.1 + Math.min(Math.abs(p.vx), 3.4) * 0.35);
-    this.lead += (targetLead - this.lead) * (1 - Math.exp(-dt * 1.2));
-    this.x += (p.x + this.lead - this.x) * (1 - Math.exp(-dt * 3));
-    this.y += (p.y + CAMERA.height - this.y) * (1 - Math.exp(-dt * 2.2));
+    this.lead += (targetLead - this.lead) * (1 - Math.exp(-dt * 1.1));
+    this.x += (p.x + this.lead - this.x) * (1 - Math.exp(-dt * 2.6));
+    // Vertical follow is lazier, so jumps don't jolt the frame.
+    const ty = p.y + CAMERA.height;
+    this.y += (ty - this.y) * (1 - Math.exp(-dt * (p.grounded ? 2 : 0.9)));
     this.apply();
   }
 
   private apply(): void {
-    this.camera.position.set(this.x, this.y + 0.6, CAMERA.distance);
-    this.camera.lookAt(this.x, this.y, 0);
+    const t = this.time;
+    const d = this.drift;
+    const hx = (Math.sin(t * 0.31) * 0.6 + Math.sin(t * 0.73 + 1.1) * 0.4) * 0.05 * d;
+    const hy = (Math.sin(t * 0.27 + 2.0) * 0.6 + Math.sin(t * 0.61) * 0.4) * 0.035 * d;
+    const fx = this.x + this.current.offsetX;
+    const fy = this.y + this.current.offsetY;
+    const dist = this.distance;
+    this.camera.position.set(fx + hx, fy + 0.6 * this.current.zoom + hy, dist);
+    this.camera.lookAt(fx + hx * 0.5, fy + hy * 0.5, 0);
+    this.camera.rotation.z += Math.sin(t * 0.23) * 0.002 * d;
   }
 }

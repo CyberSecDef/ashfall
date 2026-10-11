@@ -1,10 +1,12 @@
-// L00 — sandbox. In M1 this is only a test path: rolling hills, a ditch to
-// jump, a ledge to jump onto, a too-steep bank, and a drop. M3 turns it into
-// a full level file validated against the schema, holding one of every entity.
+// L00 — sandbox. A test path (rolling hills, a ditch to jump, a ledge to jump
+// onto, a too-steep bank, and a drop) plus every background prop kind. M3 turns
+// it into a full level file validated against the schema, with one of every
+// entity type.
 
 import type { PathPoint } from '../engine/terrain';
+import type { LevelLook } from './types';
 
-export const L00_PATH: PathPoint[] = [
+const path: PathPoint[] = [
   { x: -6, y: 0 },
   { x: 0, y: 0 },
   { x: 6, y: 0.6 },
@@ -37,4 +39,22 @@ export const L00_PATH: PathPoint[] = [
   { x: 86, y: 0 },
 ];
 
-export const L00_SPAWN_X = 1;
+export const L00: LevelLook = {
+  id: 'L00',
+  palette: {
+    sky: '#1d201f',
+    fog: '#4a4f4a',
+    ground: '#171816',
+  },
+  ambience: { drone: 'low_wind', wind: 0.45, ash: 0.6, lightning: 0.4 },
+  layers: [
+    { kind: 'far', speed: 0.12, density: 1.2, props: ['mountains'], hills: 3 },
+    { kind: 'far', speed: 0.25, density: 1.6, props: ['skyline', 'smokestacks'], hills: 2 },
+    { kind: 'mid', speed: 0.5, density: 0.9, props: ['dead_trees', 'pylons', 'wrecked_buildings'], hills: 1.5 },
+    { kind: 'mid', speed: 0.7, density: 0.8, props: ['dead_trees'], hills: 1 },
+    { kind: 'near', speed: 0.88, density: 1.4, props: ['rocks', 'fence', 'trunks'], hills: 0.4 },
+    { kind: 'foreground', speed: 1.35, density: 0.6, props: ['branches', 'grass', 'chainlink', 'wires', 'rubble'] },
+  ],
+  path,
+  spawn: { x: 1 },
+};

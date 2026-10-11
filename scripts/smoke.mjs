@@ -132,6 +132,14 @@ const check = (cond, msg) => {
   await page.keyboard.press('Backquote');
   await page.waitForTimeout(300);
   await page.screenshot({ path: join(outDir, 'desktop-debug.png') });
+  // Debug camera hint: pull-out eases the camera back.
+  await page.keyboard.press('Digit1');
+  await page.waitForTimeout(4500);
+  const dist = await page.evaluate(() => window.__ashfall.rig.distance);
+  check(dist > 16, `desktop: camera pull-out hint eases out (distance ${dist.toFixed(1)})`);
+  await page.screenshot({ path: join(outDir, 'desktop-pullout.png') });
+  const calls = await page.evaluate(() => { const r = window.__ashfall.renderer; r.render(); return r.three.info.render.calls; });
+  check(calls < 60, `desktop: draw calls per frame stay low (${calls})`);
   check(errors.length === 0, `desktop: no page errors ${errors.join(' | ')}`);
   await browser.close();
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { emptyInput, padDirections, type InputState } from '../src/engine/input';
 import { PLAYER, Player } from '../src/engine/player';
 import { Terrain } from '../src/engine/terrain';
-import { L00_PATH, L00_SPAWN_X } from '../src/levels/L00-sandbox';
+import { L00 } from '../src/levels/L00-sandbox';
 
 const DT = 1 / 60;
 
@@ -45,7 +45,7 @@ describe('Terrain', () => {
   });
 
   it('accepts the sandbox path', () => {
-    expect(() => new Terrain(L00_PATH)).not.toThrow();
+    expect(() => new Terrain(L00.path)).not.toThrow();
   });
 });
 
@@ -148,7 +148,7 @@ describe('Player', () => {
   });
 
   it('can traverse the whole sandbox using only right and jump', () => {
-    const p = new Player(new Terrain(L00_PATH), L00_SPAWN_X);
+    const p = new Player(new Terrain(L00.path), L00.spawn.x);
     // Hold right and keep tapping jump.
     for (let i = 0; i < 60 * 60 && p.x < 84; i++) {
       p.update({ ...emptyInput(), right: true, up: i % 40 < 20 }, DT);

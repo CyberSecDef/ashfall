@@ -12,7 +12,7 @@ The spec is [ASHFALL-Game-Build-Handoff.md](ASHFALL-Game-Build-Handoff.md). This
 ## Done
 
 - Repo created, with the MIT license and the handoff spec.
-- **M1 — Scaffold** (code complete, waiting for the owner's iPhone check):
+- **M1 — Scaffold** (owner checked it on an iPhone, 2026-10-11):
   - Vite 8 + TypeScript 7 + Three.js 0.186 project. `npm run dev` serves on the LAN (`--host`) for phone testing; `npm run build` writes static files to `dist/`.
   - Full-screen landscape canvas with `viewport-fit=cover`. Scroll, zoom and the long-press menu are blocked, and portrait shows a wordless rotate-device graphic.
   - One input layer (`src/engine/input.ts`) for:
@@ -36,11 +36,24 @@ The spec is [ASHFALL-Game-Build-Handoff.md](ASHFALL-Game-Build-Handoff.md). This
 
 ## In progress
 
-- Waiting for the owner to test M1 on an iPhone: https://cybersecdef.github.io/ashfall/
+- **M2 — World and depth.** Steps:
+  - [x] Seeded RNG and level look data (palette, ambience, layer specs) in the L00 file (`src/levels/types.ts`)
+  - [x] Sky: gradient, faint moon, slow bomb-scar clouds (`src/fx/sky.ts`)
+  - [x] Procedural silhouette layers placed at real depths derived from the spec's scroll speeds: z = D(1 - 1/speed) (`src/fx/layers.ts`, `src/fx/props.ts`)
+    - far: mountains, ruined skyline, smokestacks
+    - mid: dead trees, pylons with sagging cables, wrecked buildings
+    - near: rocks, fences, trunks
+  - [x] Sparse blurred foreground layer: branches, grass, chain-link, wires, rubble. Blurred canvas textures, hung from the top edge or rising from the bottom, swaying in the wind (`src/fx/foreground.ts`)
+  - [x] Haze baked per layer so distant silhouettes stay darker than the sky; ash particles in a GPU shader; film grain; vignette; distant lightning double-flicker (`src/fx/ash.ts`, `overlay.ts`, `lightning.ts`)
+  - [x] Camera: lagged follow, lazier vertical follow in the air, slight handheld drift, `hint()` / `clearHint()` for pull-outs and push-ins (debug keys 1, 2 and 0; L strikes lightning)
+  - [x] Blue scarf: sub-stepped verlet ribbon pinned at the neck that trails, sags and streams in the wind (`src/engine/scarf.ts`)
+  - [x] Tests: 27 unit tests. The smoke run adds camera-hint and draw-call checks (17 draw calls for the full scene).
+  - [ ] Faint god rays through the trees
+  - [ ] Final smoke run, deploy, then hand off for the phone check
 
 ## Left to do
 
-- [x] M1 — Scaffold (waiting for phone check)
+- [x] M1 — Scaffold
 - [ ] M2 — World and depth: all depth layers including the sparse foreground, fog, ash, grain, vignette, camera follow, blue scarf animation
 - [ ] M3 — Data-driven levels: level schema with validation, entity registry, triggers, checkpoints, save/continue, `L00` sandbox
 - [ ] M4 — Mechanics: tap-to-interact, drag/push/pull, levers and gates, hazards, threats, relay control, death and respawn
