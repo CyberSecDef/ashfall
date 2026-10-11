@@ -34,27 +34,30 @@ The spec is [ASHFALL-Game-Build-Handoff.md](ASHFALL-Game-Build-Handoff.md). This
     - `npm run smoke`: a headless iPhone-landscape check in WebKit (pad walk, jump, crawl, four-finger debug, portrait rotate graphic) plus desktop Chromium keyboard checks.
   - GitHub Actions deploys to Pages on every push to main.
 
-## In progress
-
-- **M2 — World and depth.** Steps:
-  - [x] Seeded RNG and level look data (palette, ambience, layer specs) in the L00 file (`src/levels/types.ts`)
-  - [x] Sky: gradient, faint moon, slow bomb-scar clouds (`src/fx/sky.ts`)
-  - [x] Procedural silhouette layers placed at real depths derived from the spec's scroll speeds: z = D(1 - 1/speed) (`src/fx/layers.ts`, `src/fx/props.ts`)
+- **M2 — World and depth** (code complete, waiting for the owner's iPhone check):
+  - Seeded RNG and level look data (palette, ambience, layer specs) in the L00 file (`src/levels/types.ts`)
+  - Sky: gradient, faint moon, slow bomb-scar clouds (`src/fx/sky.ts`)
+  - Procedural silhouette layers placed at real depths derived from the spec's scroll speeds: z = D(1 - 1/speed) (`src/fx/layers.ts`, `src/fx/props.ts`)
     - far: mountains, ruined skyline, smokestacks
     - mid: dead trees, pylons with sagging cables, wrecked buildings
     - near: rocks, fences, trunks
-  - [x] Sparse blurred foreground layer: branches, grass, chain-link, wires, rubble. Blurred canvas textures, hung from the top edge or rising from the bottom, swaying in the wind (`src/fx/foreground.ts`)
-  - [x] Haze baked per layer so distant silhouettes stay darker than the sky; ash particles in a GPU shader; film grain; vignette; distant lightning double-flicker (`src/fx/ash.ts`, `overlay.ts`, `lightning.ts`)
-  - [x] Camera: lagged follow, lazier vertical follow in the air, slight handheld drift, `hint()` / `clearHint()` for pull-outs and push-ins (debug keys 1, 2 and 0; L strikes lightning)
-  - [x] Blue scarf: sub-stepped verlet ribbon pinned at the neck that trails, sags and streams in the wind (`src/engine/scarf.ts`)
-  - [x] Tests: 27 unit tests. The smoke run adds camera-hint and draw-call checks (17 draw calls for the full scene).
-  - [ ] Faint god rays through the trees
-  - [ ] Final smoke run, deploy, then hand off for the phone check
+  - Sparse blurred foreground layer: branches, grass, chain-link, wires, rubble. Blurred canvas textures, hung from the top edge or rising from the bottom, swaying in the wind (`src/fx/foreground.ts`)
+  - Haze baked per layer so distant silhouettes stay darker than the sky; ash particles in a GPU shader; film grain; vignette; distant lightning double-flicker (`src/fx/ash.ts`, `overlay.ts`, `lightning.ts`)
+  - Camera: lagged follow, lazier vertical follow in the air, slight handheld drift, `hint()` / `clearHint()` for pull-outs and push-ins (debug keys 1, 2 and 0; L strikes lightning)
+  - Blue scarf: sub-stepped verlet ribbon pinned at the neck that trails, sags and streams in the wind (`src/engine/scarf.ts`)
+  - Tests: 27 unit tests. The smoke run adds camera-hint and draw-call checks (19 draw calls for the full scene).
+  - Faint god rays: additive light shafts among the mid-layer trees, pulsing slowly and lifting with lightning (`src/fx/godrays.ts`)
+  - Smoke run green (19 draw calls), deployed
+  - Deferred: the path visually bending toward or away from the camera (the spec marks it "may"). It fits better with M3's level data.
+
+## In progress
+
+- Waiting for the owner to test M2 on an iPhone: https://cybersecdef.github.io/ashfall/
 
 ## Left to do
 
 - [x] M1 — Scaffold
-- [ ] M2 — World and depth: all depth layers including the sparse foreground, fog, ash, grain, vignette, camera follow, blue scarf animation
+- [x] M2 — World and depth (waiting for phone check): all depth layers including the sparse foreground, fog, ash, grain, vignette, camera follow, blue scarf animation
 - [ ] M3 — Data-driven levels: level schema with validation, entity registry, triggers, checkpoints, save/continue, `L00` sandbox
 - [ ] M4 — Mechanics: tap-to-interact, drag/push/pull, levers and gates, hazards, threats, relay control, death and respawn
 - [ ] M5 — Levels L01–L03, playable start to finish, with procedural audio and the title fade-in

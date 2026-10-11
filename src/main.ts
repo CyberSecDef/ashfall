@@ -8,6 +8,7 @@ import { Player } from './engine/player';
 import { CAMERA, GROUND_BACK_Z, Renderer, buildGround } from './engine/renderer';
 import { Terrain } from './engine/terrain';
 import { Ash } from './fx/ash';
+import { updateGodRays } from './fx/godrays';
 import { buildWorld, swayForeground } from './fx/layers';
 import { Lightning } from './fx/lightning';
 import { Overlay } from './fx/overlay';
@@ -78,6 +79,7 @@ function frame(now: number): void {
   child.update(player, dt, wind);
   rig.update(player, dt);
   swayForeground(world.foreground, time, wind);
+  updateGodRays(world.godRays, time, flash);
   focus.set(player.x, player.y, 0);
   ash.update(time, focus, wind, renderer.three.domElement.height, renderer.camera.fov, flash);
   sky.update(renderer.camera, time, flash);

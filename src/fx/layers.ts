@@ -9,6 +9,7 @@ import type { LayerSpec, Palette } from '../levels/types';
 import type { Terrain } from '../engine/terrain';
 import { makeRng, noise1, pick, range } from '../engine/rng';
 import { PROP_GENERATORS, sag, thickLine, type V2 } from './props';
+import { buildGodRays, type GodRay } from './godrays';
 import { FOREGROUND_EDGE, FOREGROUND_KINDS, foregroundPlaneSize, foregroundTexture, type ForegroundKind } from './foreground';
 
 /**
@@ -33,6 +34,7 @@ export interface ForegroundItem {
 export interface World {
   group: THREE.Group;
   foreground: ForegroundItem[];
+  godRays: GodRay[];
 }
 
 /**
@@ -58,6 +60,7 @@ export function buildWorld(
 ): World {
   const group = new THREE.Group();
   const foreground: ForegroundItem[] = [];
+  const godRays: GodRay[] = [];
   const avgY = terrain.samples.reduce((s, p) => s + p.y, 0) / terrain.samples.length;
 
   layers.forEach((spec, li) => {
@@ -109,6 +112,14 @@ export function buildWorld(
       }
     }
 
+    // Light shafts among the mid-layer trees.
+    if (spec.kind === 'mid' && spec.props.includes('dead_trees')) {
+      for (const g of buildGodRays(r, x0, x1, z, groundY)) {
+        godRays.push(g);
+        group.add(g.mesh);
+      }
+    }
+
     if (geos.length === 0) return;
     // Silhouettes are unlit, so position is the only attribute that matters.
     const flat = geos.map((g) => {
@@ -125,7 +136,7 @@ export function buildWorld(
     group.add(mesh);
   });
 
-  return { group, foreground };
+  return { group, foreground, godRays };
 }
 
 function buildForeground(
