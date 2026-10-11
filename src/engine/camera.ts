@@ -22,6 +22,8 @@ export class CameraRig {
   private y: number;
   private lead = 0;
   private time = 0;
+  /** Smoothed visual depth of the path under the child (path bending toward or away from the camera). */
+  private depth = 0;
 
   private current = { ...DEFAULT_HINT };
   private from = { ...DEFAULT_HINT };
@@ -58,15 +60,18 @@ export class CameraRig {
   }
 
   /** Jump straight to the player (spawn, respawn, debug teleports). */
-  snap(p: Player): void {
+  snap(p: Player, pathDepth = 0): void {
+    this.depth = pathDepth;
     this.lead = p.facing * 1.1;
     this.x = p.x + this.lead;
     this.y = p.y + CAMERA.height;
     this.apply();
   }
 
-  update(p: Player, dt: number): void {
+  /** `pathDepth` is the path's visual depth at the child; the camera follows half of it, so bends read as scale changes. */
+  update(p: Player, dt: number, pathDepth = 0): void {
     this.time += dt;
+    this.depth += (pathDepth - this.depth) * (1 - Math.exp(-dt * 1.5));
     if (this.blend < 1) {
       this.blend = Math.min(1, this.blend + dt / this.blendTime);
       const t = this.blend * this.blend * (3 - 2 * this.blend); // smoothstep
@@ -92,8 +97,8 @@ export class CameraRig {
     const fx = this.x + this.current.offsetX;
     const fy = this.y + this.current.offsetY;
     const dist = this.distance;
-    this.camera.position.set(fx + hx, fy + 0.6 * this.current.zoom + hy, dist);
-    this.camera.lookAt(fx + hx * 0.5, fy + hy * 0.5, 0);
+    this.camera.position.set(fx + hx, fy + 0.6 * this.current.zoom + hy, dist + this.depth * 0.5);
+    this.camera.lookAt(fx + hx * 0.5, fy + hy * 0.5, this.depth);
     this.camera.rotation.z += Math.sin(t * 0.23) * 0.002 * d;
   }
 }

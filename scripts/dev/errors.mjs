@@ -2,7 +2,7 @@ import { webkit, chromium } from 'playwright';
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { join, extname } from 'node:path';
-const root = '/home/rweber/Git/ashfall/dist';
+const root = new URL('../../dist', import.meta.url).pathname;
 const server = createServer(async (req, res) => { const f = join(root, req.url === '/' ? 'index.html' : req.url); try { res.writeHead(200, {'content-type': {'.js':'text/javascript','.css':'text/css','.html':'text/html'}[extname(f)]}); res.end(await readFile(f)); } catch { res.writeHead(404).end(); } });
 await new Promise(r => server.listen(5199, r));
 for (const bt of [chromium, webkit]) {

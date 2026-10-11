@@ -140,6 +140,36 @@ const check = (cond, msg) => {
   await page.screenshot({ path: join(outDir, 'desktop-pullout.png') });
   const calls = await page.evaluate(() => { const r = window.__ashfall.renderer; r.render(); return r.three.info.render.calls; });
   check(calls < 60, `desktop: draw calls per frame stay low (${calls})`);
+  // Save and continue: pass a checkpoint, collect the memory, reload, and resume there.
+  await page.keyboard.press('Backquote'); // debug off
+  const teleport = (x) => page.evaluate((x) => { const a = window.__ashfall; a.player.x = x; a.player.y = a.terrain.heightAt(x); a.rig.snap(a.player); }, x);
+  await teleport(18.0);
+  await page.keyboard.down('KeyD');
+  await page.waitForTimeout(500);
+  await page.keyboard.up('KeyD');
+  await teleport(27);
+  await page.waitForTimeout(300);
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('ashfall.save.v1')));
+  check(saved?.level === 'L00' && saved.checkpoint === 0, `save: checkpoint recorded (${JSON.stringify(saved)})`);
+  check(saved?.memories?.includes('L00:rabbit'), 'save: memory collected and saved');
+  await page.reload();
+  await page.waitForFunction(() => window.__ashfall);
+  await page.waitForTimeout(300);
+  const resumed = await state(page);
+  check(Math.abs(resumed.x - 26) < 0.5, `continue: reload resumes at the checkpoint (x ${resumed.x})`);
+
+  // Exit: walking past the exit fades out and loads the next level (L00 loops to itself for now).
+  await teleport(111.5);
+  await page.keyboard.down('KeyD');
+  await page.waitForTimeout(800);
+  await page.keyboard.up('KeyD');
+  const fading = await page.evaluate(() => window.__ashfall.game.overlay.fade);
+  check(fading > 0.2, `exit: fade to black starts (${fading.toFixed(2)})`);
+  await page.waitForTimeout(3500);
+  const next = await state(page);
+  check(next.x < 5, `exit: next level loads at its spawn (x ${next.x})`);
+  await page.screenshot({ path: join(outDir, 'desktop-after-exit.png') });
+
   check(errors.length === 0, `desktop: no page errors ${errors.join(' | ')}`);
   await browser.close();
 }

@@ -92,6 +92,11 @@ export class Sky {
     camera.add(this.mesh);
   }
 
+  setPalette(palette: Palette): void {
+    (this.mat.uniforms.uTop.value as THREE.Color).set(palette.sky);
+    (this.mat.uniforms.uHorizon.value as THREE.Color).set(palette.fog);
+  }
+
   update(camera: THREE.PerspectiveCamera, time: number, flash: number): void {
     const dist = camera.far * 0.9;
     const h = 2 * dist * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));

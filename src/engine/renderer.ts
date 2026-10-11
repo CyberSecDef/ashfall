@@ -83,15 +83,15 @@ export function buildGround(terrain: Terrain, color: string, zBack = GROUND_BACK
   const s = terrain.samples;
   const pos: number[] = [];
   const idx: number[] = [];
-  // Top: two vertices per sample (back, front).
-  for (const p of s) pos.push(p.x, p.y, zBack, p.x, p.y, zFront);
+  // Top: two vertices per sample (back, front), shifted by the path's visual depth.
+  for (const p of s) pos.push(p.x, p.y, zBack + p.depth, p.x, p.y, zFront + p.depth);
   for (let i = 0; i < s.length - 1; i++) {
     const a = i * 2;
     idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);
   }
   // Front face: top edge at zFront down to `bottom`.
   const base = pos.length / 3;
-  for (const p of s) pos.push(p.x, p.y, zFront, p.x, bottom, zFront);
+  for (const p of s) pos.push(p.x, p.y, zFront + p.depth, p.x, bottom, zFront + p.depth);
   for (let i = 0; i < s.length - 1; i++) {
     const a = base + i * 2;
     idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2);

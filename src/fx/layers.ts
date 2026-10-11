@@ -129,6 +129,12 @@ export function buildWorld(
       return out;
     });
     const merged = mergeGeometries(flat);
+    // Layers standing on the terrain follow the path when it bends toward or away from the camera.
+    if (onTerrain) {
+      const pos = merged.getAttribute('position');
+      for (let i = 0; i < pos.count; i++) pos.setZ(i, pos.getZ(i) + terrain.depthAt(pos.getX(i)));
+      pos.needsUpdate = true;
+    }
     geos.forEach((g) => g.dispose());
     const mesh = new THREE.Mesh(merged, new THREE.MeshBasicMaterial({ color: layerColor(palette, z, camera.distance), fog: false }));
     mesh.position.z = z;
@@ -154,30 +160,34 @@ function buildForeground(
   const kinds = spec.props.filter((k): k is ForegroundKind => (FOREGROUND_KINDS as readonly string[]).includes(k));
   if (kinds.length === 0) return;
   for (let x = terrain.minX + spacing * 0.5 * r(); x < terrain.maxX; x += spacing * range(r, 0.6, 1.4)) {
-    const kind = pick(r, kinds);
-    const edge = FOREGROUND_EDGE[kind];
-    const [w, h] = foregroundPlaneSize(kind);
-    const geo = new THREE.PlaneGeometry(w, h);
-    // Pivot at the attached edge so sway rotates around it.
-    geo.translate(0, edge === 'top' ? -h / 2 : h / 2, 0);
-    const mat = new THREE.MeshBasicMaterial({
-      map: foregroundTexture(kind, Math.floor(r() * 3)),
-      transparent: true,
-      depthWrite: false,
-      fog: false,
-      color: 0x050505,
-    });
-    const mesh = new THREE.Mesh(geo, mat);
     // Lines of sight meet at the camera, so a prop at world x crosses the child's
     // screen position when the child is near x, whatever its depth.
-    const wx = x + (r() - 0.5) * 1.5;
-    const ground = terrain.heightAt(x);
-    mesh.position.set(wx, edge === 'top' ? ground + 3.9 + r() * 0.4 : ground - 0.55 - r() * 0.15, z);
-    if (r() < 0.5) mesh.scale.x = -1;
-    mesh.renderOrder = 10;
-    group.add(mesh);
-    out.push({ mesh, edge, phase: r() * Math.PI * 2 });
+    const item = makeForegroundItem(pick(r, kinds), Math.floor(r() * 3), x + (r() - 0.5) * 1.5, terrain.heightAt(x), z, r() < 0.5, r() * 1000);
+    group.add(item.mesh);
+    out.push(item);
   }
+}
+
+/** One foreground prop, pinned at the frame edge its kind belongs to. */
+export function makeForegroundItem(kind: ForegroundKind, variant: number, x: number, ground: number, z: number, flip: boolean, seed: number): ForegroundItem {
+  const edge = FOREGROUND_EDGE[kind];
+  const [w, h] = foregroundPlaneSize(kind);
+  const geo = new THREE.PlaneGeometry(w, h);
+  // Pivot at the attached edge so sway rotates around it.
+  geo.translate(0, edge === 'top' ? -h / 2 : h / 2, 0);
+  const mat = new THREE.MeshBasicMaterial({
+    map: foregroundTexture(kind, variant),
+    transparent: true,
+    depthWrite: false,
+    fog: false,
+    color: 0x050505,
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  const jitter = (Math.sin(seed * 12.9898) * 43758.5453) % 1;
+  mesh.position.set(x, edge === 'top' ? ground + 3.9 + Math.abs(jitter) * 0.4 : ground - 0.55 - Math.abs(jitter) * 0.15, z);
+  if (flip) mesh.scale.x = -1;
+  mesh.renderOrder = 10;
+  return { mesh, edge, phase: Math.abs(jitter) * Math.PI * 2 };
 }
 
 /** Gentle wind sway for foreground props. */

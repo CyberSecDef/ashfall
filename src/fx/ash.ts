@@ -46,7 +46,7 @@ export class Ash {
   private readonly mat: THREE.ShaderMaterial;
 
   constructor(density: number, maxCount = 900) {
-    const count = Math.round(maxCount * THREE.MathUtils.clamp(density, 0, 1));
+    const count = maxCount;
     const box = new THREE.Vector3(36, 18, 34);
     const pos = new Float32Array(count * 3);
     const seed = new Float32Array(count * 4);
@@ -80,9 +80,16 @@ export class Ash {
     this.points = new THREE.Points(geo, this.mat);
     this.points.frustumCulled = false;
     this.points.renderOrder = 5;
+    this.setDensity(density);
   }
 
   /** `bufferHeight` is the drawing buffer height in pixels; `fov` the camera's vertical fov in degrees. */
+  /** Show a fraction of the flakes (level ash density, quality tiers). */
+  setDensity(density: number): void {
+    const total = this.points.geometry.getAttribute('position').count;
+    this.points.geometry.setDrawRange(0, Math.round(total * THREE.MathUtils.clamp(density, 0, 1)));
+  }
+
   update(time: number, focus: THREE.Vector3, wind: number, bufferHeight: number, fov: number, flash: number): void {
     const u = this.mat.uniforms;
     u.uTime.value = time;

@@ -34,7 +34,7 @@ The spec is [ASHFALL-Game-Build-Handoff.md](ASHFALL-Game-Build-Handoff.md). This
     - `npm run smoke`: a headless iPhone-landscape check in WebKit (pad walk, jump, crawl, four-finger debug, portrait rotate graphic) plus desktop Chromium keyboard checks.
   - GitHub Actions deploys to Pages on every push to main.
 
-- **M2 — World and depth** (code complete, waiting for the owner's iPhone check):
+- **M2 — World and depth** (owner checked it on an iPhone, 2026-10-11):
   - Seeded RNG and level look data (palette, ambience, layer specs) in the L00 file (`src/levels/types.ts`)
   - Sky: gradient, faint moon, slow bomb-scar clouds (`src/fx/sky.ts`)
   - Procedural silhouette layers placed at real depths derived from the spec's scroll speeds: z = D(1 - 1/speed) (`src/fx/layers.ts`, `src/fx/props.ts`)
@@ -49,17 +49,33 @@ The spec is [ASHFALL-Game-Build-Handoff.md](ASHFALL-Game-Build-Handoff.md). This
   - Faint god rays: additive light shafts among the mid-layer trees, pulsing slowly and lifting with lightning (`src/fx/godrays.ts`)
   - Smoke run green (19 draw calls), deployed
   - Fix after owner feedback: the child got stuck in the sandbox ditch (1.3 m deep, jump reach 0.7 m). Added auto-scramble onto ledges up to about 0.6 m when holding toward them, a mid-air edge grab for higher ledges, a footprint-based floor (one foot on an edge counts), and stronger air control. The ditch is now 0.55 m deep and the sandbox ledge 1 m (jump and grab).
-  - Deferred: the path visually bending toward or away from the camera (the spec marks it "may"). It fits better with M3's level data.
+  - The path bending in depth was deferred here and delivered in M3.
+
+- **M3 — Data-driven levels** (code complete, waiting for the owner's iPhone check):
+  - Zod level schema (`src/levels/schema.ts`) plus cross-checks: path order, positions inside the path, unique ids, targets that resolve, at most one memory per level, exit chaining. `npm run build` runs `npm run validate` first, so bad level data fails the build.
+  - Entity registry (`src/entities/`): params in `params.ts` (pure Zod), one behavior file per type, and a mapped type in `registry.ts` so a missing behavior is a compile error. Types: `checkpoint`, `camera_hint`, `background_event` (convoy whose lights cut out, marchers, airship with searchlight), `foreground_prop`, `memory_collectible` (faint glint; walk into it to keep it).
+  - Triggers (`src/engine/triggers.ts`): x-range zones firing `camera`, `camera_clear`, `signal`, `lightning`, `sound` (cue recorded for M5), and `tension` (grain and vignette). One-shot triggers behind a respawn point are skipped.
+  - Level manager (`src/engine/game.ts`):
+    - builds a level entirely from its data file and disposes it on unload
+    - fades through black between levels
+    - `respawn()` returns to the last checkpoint
+    - checkpoints come from the level list plus checkpoint entities, and passing one saves
+  - Save and continue (`src/engine/save.ts`): level, checkpoint and memories in localStorage under `ashfall.save.v1`. It survives throwing, blocked or corrupt storage, never moves backwards within a level, and a reload resumes at the saved checkpoint.
+  - Debug menu: jump to a level or checkpoint, respawn, reset the save. Markers show checkpoints (green), triggers (amber) and the exit (white). R respawns.
+  - Path bending in depth: per-point `depth` moves the ground, the child, on-terrain layers and the camera (which follows half the bend), so the path visibly curves away and back.
+  - L00 sandbox rebuilt as a full level file with every M3 entity type, triggers, three checkpoints, a memory, and an exit that loops back to L00 (the story levels arrive in M5).
+  - Tests: 56 unit tests (schema error cases, save robustness, triggers, registry sync, depth). The smoke run adds save/checkpoint/memory persistence, continue after reload, and an exit fade into the next level. 16 smoke checks pass.
+  - Note: Zod adds about 34 KB gzipped to the bundle. M6 can move to `zod/mini` or validate only at build time.
 
 ## In progress
 
-- Waiting for the owner to test M2 on an iPhone: https://cybersecdef.github.io/ashfall/
+- Waiting for the owner to test M3 on an iPhone: https://cybersecdef.github.io/ashfall/
 
 ## Left to do
 
 - [x] M1 — Scaffold
-- [x] M2 — World and depth (waiting for phone check): all depth layers including the sparse foreground, fog, ash, grain, vignette, camera follow, blue scarf animation
-- [ ] M3 — Data-driven levels: level schema with validation, entity registry, triggers, checkpoints, save/continue, `L00` sandbox
+- [x] M2 — World and depth: all depth layers including the sparse foreground, fog, ash, grain, vignette, camera follow, blue scarf animation
+- [x] M3 — Data-driven levels (waiting for phone check): level schema with validation, entity registry, triggers, checkpoints, save/continue, `L00` sandbox
 - [ ] M4 — Mechanics: tap-to-interact, drag/push/pull, levers and gates, hazards, threats, relay control, death and respawn
 - [ ] M5 — Levels L01–L03, playable start to finish, with procedural audio and the title fade-in
 - [ ] M6 — Polish and performance: 60 fps on iPhone, quality tiers, PWA fullscreen, README

@@ -75,3 +75,27 @@ body {
   white-space: pre;
   pointer-events: none;
 }
+
+.debug-menu {
+  margin-top: 6px;
+  pointer-events: auto;
+  white-space: normal;
+}
+
+.debug-menu div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.debug-menu button {
+  font: inherit;
+  color: #d6ff9a;
+  background: rgba(30, 34, 28, 0.9);
+  border: 1px solid #5d6b4e;
+  border-radius: 3px;
+  padding: 6px 9px;
+  min-height: 30px;
+  touch-action: manipulation;
+}

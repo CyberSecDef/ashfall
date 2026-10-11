@@ -1,98 +1,92 @@
-import * as THREE from 'three';
-import { CameraRig } from './engine/camera';
-import { ChildView } from './engine/child';
-import { Debug } from './engine/debug';
+import { Debug, type DebugMenuItem } from './engine/debug';
+import { Game } from './engine/game';
 import { Input } from './engine/input';
 import { PadHint } from './engine/padhint';
-import { Player } from './engine/player';
-import { CAMERA, GROUND_BACK_Z, Renderer, buildGround } from './engine/renderer';
-import { Terrain } from './engine/terrain';
-import { Ash } from './fx/ash';
-import { updateGodRays } from './fx/godrays';
-import { buildWorld, swayForeground } from './fx/layers';
-import { Lightning } from './fx/lightning';
-import { Overlay } from './fx/overlay';
-import { Sky } from './fx/sky';
-import { L00 } from './levels/L00-sandbox';
+import { Renderer } from './engine/renderer';
+import { PLAY_ORDER, levels } from './levels';
 
 const STEP = 1 / 60;
 const MAX_STEPS = 5;
-const level = L00;
 
 const container = document.getElementById('game')!;
 const renderer = new Renderer(container);
-renderer.setPalette(level.palette);
 const input = new Input(container);
-const debug = new Debug(document.getElementById('debug')!, renderer.scene);
+const game = new Game(renderer, input);
 const padHint = new PadHint(document.getElementById('pad-hint') as HTMLCanvasElement, input);
 
-const terrain = new Terrain(level.path);
-const player = new Player(terrain, level.spawn.x);
-const child = new ChildView();
-const world = buildWorld(level.id, level.layers, level.palette, terrain, CAMERA, GROUND_BACK_Z);
-renderer.scene.add(buildGround(terrain, level.palette.ground), world.group, child.root, child.ribbon);
-
-const sky = new Sky(level.palette, renderer.camera);
-const ash = new Ash(level.ambience.ash);
-renderer.scene.add(ash.points);
-const overlay = new Overlay();
-const lightning = new Lightning(level.ambience.lightning);
-const rig = new CameraRig(renderer.camera, player);
-child.update(player, 0, level.ambience.wind);
-child.resetScarf();
+const menu = (): DebugMenuItem[][] => [
+  [...levels().keys()].map((id) => ({ label: id, action: () => game.transition(() => game.load(id, -1), 0.3, 0.5) })),
+  [
+    { label: 'spawn', action: () => game.load(game.level.id, -1) },
+    ...game.checkpoints.map((_, i) => ({ label: `cp ${i}`, action: () => game.load(game.level.id, i) })),
+  ],
+  [
+    { label: 'respawn', action: () => game.respawn() },
+    { label: 'reset save', action: () => game.save.reset() },
+  ],
+];
+const debug = new Debug(document.getElementById('debug')!, renderer.scene, menu);
 
 input.onMultiTouch((n) => {
   if (n === 4) debug.toggle();
 });
 
-// Debug-only camera and flash keys, for tuning M2's look before triggers exist (M3).
+// Debug-only keys for tuning camera framing, flashes and respawn.
 window.addEventListener('keydown', (e) => {
   if (!debug.enabled) return;
-  if (e.code === 'Digit1') rig.hint({ zoom: 1.6, offsetY: 1 }, 4);
-  if (e.code === 'Digit2') rig.hint({ zoom: 0.75, offsetY: -0.2 }, 2);
-  if (e.code === 'Digit0') rig.clearHint(3);
-  if (e.code === 'KeyL') lightning.strike();
+  if (e.code === 'Digit1') game.rig.hint({ zoom: 1.6, offsetY: 1 }, 4);
+  if (e.code === 'Digit2') game.rig.hint({ zoom: 0.75, offsetY: -0.2 }, 2);
+  if (e.code === 'Digit0') game.rig.clearHint(3);
+  if (e.code === 'KeyL') game.lightning.strike();
+  if (e.code === 'KeyR') game.respawn();
 });
 
-const baseHemi = renderer.hemi.intensity;
-const focus = new THREE.Vector3();
-let time = 0;
+game.continueOrStart(PLAY_ORDER[0]);
+
 let last = performance.now();
 let acc = 0;
 
 function frame(now: number): void {
   const dt = Math.min((now - last) / 1000, 0.25);
   last = now;
-  time += dt;
   acc += dt;
   let steps = 0;
   while (acc >= STEP && steps < MAX_STEPS) {
-    input.poll();
-    player.update(input.state, STEP);
+    game.step(STEP);
     acc -= STEP;
     steps++;
   }
   if (steps === MAX_STEPS) acc = 0;
 
-  const wind = level.ambience.wind;
-  const flash = lightning.update(dt);
-  child.update(player, dt, wind);
-  rig.update(player, dt);
-  swayForeground(world.foreground, time, wind);
-  updateGodRays(world.godRays, time, flash);
-  focus.set(player.x, player.y, 0);
-  ash.update(time, focus, wind, renderer.three.domElement.height, renderer.camera.fov, flash);
-  sky.update(renderer.camera, time, flash);
-  renderer.hemi.intensity = baseHemi + flash * 1.6;
-  overlay.update(time, window.innerWidth, window.innerHeight, flash);
-
+  game.frame(dt);
   padHint.update(dt);
-  debug.frame(dt, player, input.state, terrain);
-  renderer.render();
-  overlay.render(renderer.three);
+  debug.frame(dt, game);
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
 
 // Handle for headless smoke tests and console poking.
-(window as unknown as { __ashfall: unknown }).__ashfall = { player, input, debug, rig, lightning, renderer, terrain, child, world };
+(window as unknown as { __ashfall: unknown }).__ashfall = {
+  game,
+  debug,
+  input,
+  renderer,
+  get player() {
+    return game.player;
+  },
+  get rig() {
+    return game.rig;
+  },
+  get terrain() {
+    return game.current.terrain;
+  },
+  get child() {
+    return game.child;
+  },
+  get world() {
+    return game.current.world;
+  },
+  get lightning() {
+    return game.lightning;
+  },
+};

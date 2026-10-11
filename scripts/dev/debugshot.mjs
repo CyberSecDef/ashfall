@@ -1,0 +1,15 @@
+import { webkit, devices } from 'playwright';
+import { createServer } from 'node:http';
+import { readFile } from 'node:fs/promises';
+import { join, extname, resolve } from 'node:path';
+const root = resolve('dist');
+const server = createServer(async (req, res) => { const f = join(root, req.url === '/' ? 'index.html' : req.url); try { res.writeHead(200, { 'content-type': { '.js': 'text/javascript', '.css': 'text/css', '.html': 'text/html' }[extname(f)] }); res.end(await readFile(f)); } catch { res.writeHead(404).end(); } });
+await new Promise((r) => server.listen(0, r));
+const b = await webkit.launch();
+const p = await (await b.newContext({ ...devices['iPhone 15 Pro landscape'] })).newPage();
+await p.goto(`http://localhost:${server.address().port}/`);
+await p.waitForFunction(() => window.__ashfall);
+await p.evaluate(() => window.__ashfall.debug.toggle());
+await p.waitForTimeout(800);
+await p.screenshot({ path: resolve('smoke-out/iphone-debug-menu.png') });
+await b.close(); server.close();

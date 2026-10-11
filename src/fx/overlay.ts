@@ -15,12 +15,14 @@ const vert = /* glsl */ `
 const vignetteFrag = /* glsl */ `
   uniform float uAspect;
   uniform float uStrength;
+  uniform float uFade;
   varying vec2 vUv;
   void main() {
     vec2 p = (vUv - 0.5) * vec2(uAspect, 1.0);
     float d = length(p) / length(vec2(uAspect, 1.0) * 0.5);
     float a = smoothstep(0.45, 1.05, d) * uStrength;
-    gl_FragColor = vec4(0.0, 0.0, 0.0, a);
+    // Fade to black (level changes, respawns) rides on the same pass.
+    gl_FragColor = vec4(0.0, 0.0, 0.0, max(a, uFade));
   }
 `;
 
@@ -73,8 +75,10 @@ export class Overlay {
   readonly camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   /** Extra darkening and grain the game can push (radiation, tension). 0 = normal. */
   intensity = 0;
+  /** Black fade, 0 (clear) to 1 (black). */
+  fade = 0;
 
-  private readonly vignette = { uAspect: { value: 1 }, uStrength: { value: 0.75 } };
+  private readonly vignette = { uAspect: { value: 1 }, uStrength: { value: 0.75 }, uFade: { value: 0 } };
   private readonly grain = { uTime: { value: 0 }, uAmount: { value: 0.07 }, uRes: { value: new THREE.Vector2(1, 1) } };
   private readonly flash = { uFlash: { value: 0 } };
 
@@ -89,6 +93,7 @@ export class Overlay {
   update(time: number, width: number, height: number, flash: number): void {
     this.vignette.uAspect.value = width / height;
     this.vignette.uStrength.value = 0.75 + this.intensity * 0.2;
+    this.vignette.uFade.value = this.fade;
     this.grain.uTime.value = time;
     this.grain.uRes.value.set(width, height);
     this.grain.uAmount.value = 0.065 + this.intensity * 0.12;

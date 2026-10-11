@@ -7,11 +7,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
-    "build": "tsc --noEmit && vite build",
+    "build": "npm run validate && tsc --noEmit && vite build",
     "preview": "vite preview --host",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "validate": "vitest run tests/levels.test.ts"
   },
   "dependencies": {
     "three": "^0.186.1",

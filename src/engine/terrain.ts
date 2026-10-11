@@ -10,12 +10,15 @@ export interface PathPoint {
   surface?: Surface;
   /** Keep this corner sharp instead of smoothing through it (ledges, curbs). */
   sharp?: boolean;
+  /** Visual only: shift toward (+) or away from (-) the camera, in meters. */
+  depth?: number;
 }
 
 export interface GroundSample {
   x: number;
   y: number;
   surface: Surface;
+  depth: number;
 }
 
 export class Terrain {
@@ -68,6 +71,17 @@ export class Terrain {
     return (b.y - a.y) / (b.x - a.x);
   }
 
+  /** Visual depth offset of the path at x (gameplay ignores it). */
+  depthAt(x: number): number {
+    const s = this.samples;
+    if (x <= s[0].x) return s[0].depth;
+    if (x >= s[s.length - 1].x) return s[s.length - 1].depth;
+    const i = this.indexAt(x);
+    const a = s[i];
+    const b = s[i + 1];
+    return a.depth + (b.depth - a.depth) * ((x - a.x) / (b.x - a.x));
+  }
+
   surfaceAt(x: number): Surface {
     return this.samples[this.indexAt(x)].surface;
   }
@@ -88,11 +102,14 @@ function resample(points: PathPoint[], step: number): GroundSample[] {
       const t = k / steps;
       const x = p1.x + (p2.x - p1.x) * t;
       const y = straight ? p1.y + (p2.y - p1.y) * t : catmullRom(p0.y, p1.y, p2.y, p3.y, t);
-      out.push({ x, y, surface: p1.surface ?? 'dirt' });
+      // Depth always eases smoothly; a sudden bend toward the camera would look like a glitch.
+      const e = t * t * (3 - 2 * t);
+      const depth = (p1.depth ?? 0) + ((p2.depth ?? 0) - (p1.depth ?? 0)) * e;
+      out.push({ x, y, surface: p1.surface ?? 'dirt', depth });
     }
   }
   const last = points[n - 1];
-  out.push({ x: last.x, y: last.y, surface: last.surface ?? points[n - 2].surface ?? 'dirt' });
+  out.push({ x: last.x, y: last.y, surface: last.surface ?? points[n - 2].surface ?? 'dirt', depth: last.depth ?? 0 });
   return out;
 }
 

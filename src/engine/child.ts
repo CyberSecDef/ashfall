@@ -66,7 +66,7 @@ export class ChildView {
     const a = this.body.rotation.z;
     const lx = NECK.x * Math.cos(a) - NECK.y * Math.sin(a);
     const ly = NECK.x * Math.sin(a) + NECK.y * Math.cos(a) + this.body.position.y;
-    return { x: this.root.position.x + lx * this.root.scale.x, y: this.root.position.y + ly, z: 0.06 };
+    return { x: this.root.position.x + lx * this.root.scale.x, y: this.root.position.y + ly, z: this.root.position.z + 0.06 };
   }
 
   /** Snap the scarf to the child (spawn, respawn, debug jumps). */
@@ -103,8 +103,9 @@ export class ChildView {
     this.ribbon.geometry.attributes.position.needsUpdate = true;
   }
 
-  update(p: Player, dt: number, wind = 0.3): void {
-    this.root.position.set(p.x, p.y, 0);
+  /** `depth` is the path's visual depth at the child (see Terrain.depthAt). */
+  update(p: Player, dt: number, wind = 0.3, depth = 0): void {
+    this.root.position.set(p.x, p.y, depth);
     this.root.scale.x = p.facing;
 
     const speed = Math.abs(p.vx);

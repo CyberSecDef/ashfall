@@ -16,6 +16,11 @@ export class Lightning {
     this.wait = this.nextWait();
   }
 
+  setFrequency(frequency: number): void {
+    this.frequency = frequency;
+    this.wait = this.nextWait();
+  }
+
   private nextWait(): number {
     if (this.frequency <= 0) return Infinity;
     // frequency 1 -> every ~6-14 s; 0.2 -> every ~30-70 s.

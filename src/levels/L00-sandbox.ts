@@ -1,12 +1,12 @@
-// L00 — sandbox. A test path (rolling hills, a ditch to jump, a ledge to jump
-// onto, a too-steep bank, and a drop) plus every background prop kind. M3 turns
-// it into a full level file validated against the schema, with one of every
-// entity type.
+// L00 — sandbox. Not part of the story: a test level that holds one of every
+// entity type and every background prop kind, plus terrain features to try
+// movement on (hills, a ditch, a ledge to grab, a steep bank, a drop, and a
+// stretch where the path bends toward and away from the camera).
+// Reach it from the debug menu.
 
-import type { PathPoint } from '../engine/terrain';
-import type { LevelLook } from './types';
+import type { LevelInput } from './schema';
 
-const path: PathPoint[] = [
+const path: LevelInput['path'] = [
   { x: -6, y: 0 },
   { x: 0, y: 0 },
   { x: 6, y: 0.6 },
@@ -34,13 +34,18 @@ const path: PathPoint[] = [
   // Drop off a rubble edge.
   { x: 64, y: 1.6, surface: 'concrete', sharp: true },
   { x: 64.05, y: 0, surface: 'dirt', sharp: true },
+  // The path bends away from the camera, then toward it (visual only).
   { x: 72, y: 0.3 },
-  { x: 80, y: -0.2 },
-  { x: 86, y: 0 },
+  { x: 80, y: -0.2, depth: -2.5 },
+  { x: 90, y: 0.2, depth: -2.5 },
+  { x: 98, y: 0, depth: 1.2 },
+  { x: 106, y: 0.3, depth: 0 },
+  { x: 114, y: 0 },
 ];
 
-export const L00: LevelLook = {
+export const L00: LevelInput = {
   id: 'L00',
+  name: 'Sandbox',
   palette: {
     sky: '#1d201f',
     fog: '#4a4f4a',
@@ -57,4 +62,28 @@ export const L00: LevelLook = {
   ],
   path,
   spawn: { x: 1 },
+  entities: [
+    // A convoy crawls along the far ridge once the child crests the first hill; its lights cut out together.
+    { type: 'background_event', id: 'convoy', x: 30, kind: 'convoy', speed: 0.2, span: 70, duration: 16, autoplayAt: 9 },
+    // Marchers play when a trigger signals them.
+    { type: 'background_event', id: 'marchers', x: 62, kind: 'marchers', speed: 0.55, span: 30, duration: 22 },
+    { type: 'background_event', id: 'airship', x: 100, kind: 'airship', speed: 0.18, span: 140, duration: 40, autoplayAt: 76 },
+    // Slow pull-out over the hollow.
+    { type: 'camera_hint', x: 40, w: 10, zoom: 1.45, offsetY: 0.8, seconds: 4, exitSeconds: 3 },
+    // Push-in at the drop.
+    { type: 'camera_hint', x: 60, w: 5, zoom: 0.8, seconds: 1.5, exitSeconds: 2 },
+    { type: 'foreground_prop', x: 47, kind: 'branches', variant: 1 },
+    { type: 'checkpoint', x: 26 },
+    // Off the path, just past the ditch: a toy rabbit in the grass.
+    { type: 'memory_collectible', id: 'rabbit', x: 18.5, kind: 'toy_rabbit' },
+  ],
+  triggers: [
+    { x: 54, w: 2, action: 'signal', target: 'marchers' },
+    { x: 56, w: 1, action: 'lightning' },
+    { x: 58, w: 1, action: 'sound', cue: 'distant_boom' },
+    { x: 60, w: 5, action: 'tension', amount: 0.6, once: false },
+    { x: 66, w: 1, action: 'tension', amount: 0, once: false },
+  ],
+  checkpoints: [44, 68, 96],
+  exit: { x: 112, next: 'L00' },
 };
