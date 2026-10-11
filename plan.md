@@ -51,7 +51,7 @@ The spec is [ASHFALL-Game-Build-Handoff.md](ASHFALL-Game-Build-Handoff.md). This
   - Fix after owner feedback: the child got stuck in the sandbox ditch (1.3 m deep, jump reach 0.7 m). Added auto-scramble onto ledges up to about 0.6 m when holding toward them, a mid-air edge grab for higher ledges, a footprint-based floor (one foot on an edge counts), and stronger air control. The ditch is now 0.55 m deep and the sandbox ledge 1 m (jump and grab).
   - The path bending in depth was deferred here and delivered in M3.
 
-- **M3 — Data-driven levels** (code complete, waiting for the owner's iPhone check):
+- **M3 — Data-driven levels** (owner checked it on an iPhone, 2026-10-11):
   - Zod level schema (`src/levels/schema.ts`) plus cross-checks: path order, positions inside the path, unique ids, targets that resolve, at most one memory per level, exit chaining. `npm run build` runs `npm run validate` first, so bad level data fails the build.
   - Entity registry (`src/entities/`): params in `params.ts` (pure Zod), one behavior file per type, and a mapped type in `registry.ts` so a missing behavior is a compile error. Types: `checkpoint`, `camera_hint`, `background_event` (convoy whose lights cut out, marchers, airship with searchlight), `foreground_prop`, `memory_collectible` (faint glint; walk into it to keep it).
   - Triggers (`src/engine/triggers.ts`): x-range zones firing `camera`, `camera_clear`, `signal`, `lightning`, `sound` (cue recorded for M5), and `tension` (grain and vignette). One-shot triggers behind a respawn point are skipped.
@@ -71,13 +71,26 @@ The spec is [ASHFALL-Game-Build-Handoff.md](ASHFALL-Game-Build-Handoff.md). This
 
 ## In progress
 
-- Waiting for the owner to test M3 on an iPhone: https://cybersecdef.github.io/ashfall/
+- **M4 — Mechanics.** Steps:
+  - [x] Collision core (`src/engine/collision.ts`): solid boxes the child can't pass, can stand on and scramble onto; ceilings that force crawling; moving solids that carry riders
+  - [x] Player controller on top of it (also drives relay bodies through `ActorParams`): step-ups, scramble onto boxes, crawl under ceilings, ladders and ropes, shallow-water slowdown, deadly falls
+  - [x] Movable boxes (`src/engine/bodies.ts`: crates, carts, logs, bodies): gravity, stacking, rest on terrain and other boxes; hold interact and move to push or pull
+  - [ ] Interaction: the nearest interactable gets a subtle rim highlight; a tap or E uses it
+  - [ ] Level runtime split from rendering (`src/engine/runtime.ts`) so puzzles run in tests without WebGL
+  - [ ] Death and respawn: limp collapse, fade, respawn at the checkpoint within about 1.5 s, with puzzle state snapshotted at checkpoints
+  - [ ] Obstacles: `obstacle_low`, `obstacle_high`, `log`, `boulder`, `fence`, `crawlspace`, `pipe`, `water`, `ladder`, `rope`
+  - [ ] Movables: `crate`, `cart`, `draggable_log`, `body`
+  - [ ] Mechanisms: `lever`, `valve`, `pressure_plate`, `gate`, `lift`, `conveyor`, `power_cable`
+  - [ ] Hazards: `radiation_zone`, `falling_debris`, `wire_trap`, `deep_water`, `fall_height`
+  - [ ] Threats: `feral_dog`, `searchlight`, `patrol_drone`, `guard`, plus `cover` (grass, shadow) for hiding, which the spec's stealth needs
+  - [ ] Relay: `relay_transmitter`, `dormant_body`. Control a body with the same controls; tap the child to return. The ability is saved.
+  - [ ] L00 sandbox with every entity type; tests, smoke, deploy, hand off for the phone check
 
 ## Left to do
 
 - [x] M1 — Scaffold
 - [x] M2 — World and depth: all depth layers including the sparse foreground, fog, ash, grain, vignette, camera follow, blue scarf animation
-- [x] M3 — Data-driven levels (waiting for phone check): level schema with validation, entity registry, triggers, checkpoints, save/continue, `L00` sandbox
+- [x] M3 — Data-driven levels: level schema with validation, entity registry, triggers, checkpoints, save/continue, `L00` sandbox
 - [ ] M4 — Mechanics: tap-to-interact, drag/push/pull, levers and gates, hazards, threats, relay control, death and respawn
 - [ ] M5 — Levels L01–L03, playable start to finish, with procedural audio and the title fade-in
 - [ ] M6 — Polish and performance: 60 fps on iPhone, quality tiers, PWA fullscreen, README
