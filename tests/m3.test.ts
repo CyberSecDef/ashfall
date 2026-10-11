@@ -34,6 +34,14 @@ describe('SaveGame', () => {
     expect(s.data).toMatchObject({ level: 'L02', checkpoint: -1 });
   });
 
+  it('entering a level resets its checkpoint, even re-entering the same level', () => {
+    const s = new SaveGame(memoryStore());
+    s.reach('L00', 3);
+    s.collect('L00:rabbit', 'L00');
+    s.enter('L00');
+    expect(s.data).toMatchObject({ level: 'L00', checkpoint: -1, memories: ['L00:rabbit'] });
+  });
+
   it('keeps memories across levels and does not duplicate them', () => {
     const s = new SaveGame(memoryStore());
     s.collect('L01:rabbit', 'L01');

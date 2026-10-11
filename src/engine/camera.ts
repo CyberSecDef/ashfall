@@ -50,7 +50,14 @@ export class CameraRig {
   /** Ease toward a framing over `seconds`. Omitted fields return to default. */
   hint(h: CameraHint, seconds = 3): void {
     this.from = { ...this.current };
-    this.to = { ...DEFAULT_HINT, ...h };
+    // Fields left undefined (or non-finite) fall back to the default framing.
+    // A plain spread would copy `undefined` over the defaults and NaN the camera.
+    const pick = (v: number | undefined, d: number) => (typeof v === 'number' && Number.isFinite(v) ? v : d);
+    this.to = {
+      zoom: pick(h.zoom, DEFAULT_HINT.zoom),
+      offsetY: pick(h.offsetY, DEFAULT_HINT.offsetY),
+      offsetX: pick(h.offsetX, DEFAULT_HINT.offsetX),
+    };
     this.blend = 0;
     this.blendTime = Math.max(0.01, seconds);
   }
@@ -90,6 +97,12 @@ export class CameraRig {
   }
 
   private apply(): void {
+    if (!Number.isFinite(this.x) || !Number.isFinite(this.y) || !Number.isFinite(this.depth)) {
+      this.x = this.y = this.depth = 0;
+    }
+    for (const k of ['zoom', 'offsetY', 'offsetX'] as const) {
+      if (!Number.isFinite(this.current[k])) this.current[k] = DEFAULT_HINT[k];
+    }
     const t = this.time;
     const d = this.drift;
     const hx = (Math.sin(t * 0.31) * 0.6 + Math.sin(t * 0.73 + 1.1) * 0.4) * 0.05 * d;

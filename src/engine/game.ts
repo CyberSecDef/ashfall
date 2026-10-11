@@ -202,7 +202,8 @@ export class Game {
     rig.snap(player, terrain.depthAt(player.x));
     this.child.update(player, 0, level.ambience.wind, terrain.depthAt(player.x));
     this.child.resetScarf();
-    this.save.reach(level.id, cp);
+    if (cp < 0) this.save.enter(level.id);
+    else this.save.reach(level.id, cp);
   }
 
   private unload(): void {
@@ -261,7 +262,7 @@ export class Game {
     if (!c.exiting && c.player.x >= c.level.exit.x) {
       c.exiting = true;
       const next = nextLevelId(c.level.id);
-      this.save.reach(next, -1);
+      this.save.enter(next);
       this.transition(() => this.load(next, -1), 1.6, 1.8);
     }
   }

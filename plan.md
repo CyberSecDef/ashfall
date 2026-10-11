@@ -64,7 +64,9 @@ The spec is [ASHFALL-Game-Build-Handoff.md](ASHFALL-Game-Build-Handoff.md). This
   - Debug menu: jump to a level or checkpoint, respawn, reset the save. Markers show checkpoints (green), triggers (amber) and the exit (white). R respawns.
   - Path bending in depth: per-point `depth` moves the ground, the child, on-terrain layers and the camera (which follows half the bend), so the path visibly curves away and back.
   - L00 sandbox rebuilt as a full level file with every M3 entity type, triggers, three checkpoints, a memory, and an exit that loops back to L00 (the story levels arrive in M5).
-  - Tests: 56 unit tests (schema error cases, save robustness, triggers, registry sync, depth). The smoke run adds save/checkpoint/memory persistence, continue after reload, and an exit fade into the next level. 16 smoke checks pass.
+  - Tests: 56 unit tests (schema error cases, save robustness, triggers, registry sync, depth). The smoke run adds a full fast-forwarded playthrough, save/checkpoint/memory persistence, continue after reload, and an exit fade into the next level. 60 unit tests and 18 smoke checks pass.
+  - Fix after owner feedback: the screen turned grey and empty mid-play. Camera hint zones passed unset fields as `undefined`, which overwrote the defaults, made the camera position NaN, and left nothing visible but fog and grain. `hint()` now ignores unset or non-finite fields, the camera resets itself if it ever sees a non-finite value, and a regression test covers it. The smoke run now also plays the whole sandbox start to finish (fast-forwarded) and checks the camera every frame; the teleport-based checks had skipped the hint zones.
+  - Fix: exiting into the same level (the sandbox loops to itself) kept the old checkpoint, so a reload resumed near the end. Entering a level now always resets its checkpoint (`save.enter`).
   - Note: Zod adds about 34 KB gzipped to the bundle. M6 can move to `zod/mini` or validate only at build time.
 
 ## In progress

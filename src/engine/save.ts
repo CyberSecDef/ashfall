@@ -66,6 +66,12 @@ export class SaveGame {
     this.write();
   }
 
+  /** Entering a level from its start (via an exit or a fresh load): always resets its checkpoint. */
+  enter(level: string): void {
+    this.data = { version: 1, level, checkpoint: -1, memories: this.data?.memories ?? [] };
+    this.write();
+  }
+
   collect(memoryId: string, level: string): void {
     if (!this.data) this.data = { version: 1, level, checkpoint: -1, memories: [] };
     if (!this.data.memories.includes(memoryId)) {
