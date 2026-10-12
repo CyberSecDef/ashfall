@@ -139,7 +139,26 @@
   wait(2.4);
   tap(); // back to the child
   wait(0.6);
-  go(346.5, { walk: true }); // through the gate, past the survivor, to the exit
+  go(343.5, { walk: true }); // through the gate, past the survivor
+
+  // A heavy lever only a body can throw: the shutter lifts just enough to crawl under.
+  tap(); // take over the drone
+  go(346.3, { walk: true });
+  tap(); // throw the lever
+  wait(1.5);
+  go(345.0, { walk: true }); // step it away from the lever
+  tap(); // back to the child
+  go(348.2, { walk: true });
+  go(349.4, { crawl: true }); // under the shutter
+  go(354.6, { walk: true }); // down into the cellar
+  tap(); // heave the hatch open
+  wait(0.8);
+  go(356.8, { walk: true, jumps: [355.65] }); // and climb out
+  // Run for the freight car and jump aboard; ride it out.
+  until(() => g.current.child.x > ent('freight_car').debug().x - 3.4, { right: true }, 12);
+  hold(0.3, { right: true, up: true });
+  until(() => g.current.child.grounded && g.current.child.standingOn?.tag === 'freight_car', { right: true }, 6);
+  until(() => g.current.exiting, {}, 40);
   add({ kind: 'end' });
 
   // ---- runner ----
@@ -221,6 +240,11 @@
           if (t >= s.s) next();
           break;
         case 'until':
+          if (g.current.exiting && s.fn.toString().indexOf('exiting') < 0) {
+            i = steps.length - 1;
+            t = 0;
+            break;
+          }
           if (t > s.timeout) window.__dirWarn.push(`until timed out (step ${i}) at x=${actor().x.toFixed(2)}`);
           if (s.fn() || t > s.timeout) next();
           break;

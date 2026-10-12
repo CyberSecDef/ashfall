@@ -63,8 +63,8 @@ const path: LevelInput['path'] = [
   // Threats and relay (243-350).
   { x: 349.9, y: 0, sharp: true },
   // Story set pieces (350-400): a cellar under a hatch, then a rail line.
-  { x: 350, y: -1.0, sharp: true },
-  { x: 355.9, y: -1.0, sharp: true },
+  { x: 350, y: -1.2, sharp: true },
+  { x: 355.9, y: -1.2, sharp: true },
   { x: 356, y: 0, sharp: true, surface: 'gravel' },
   { x: 400, y: 0, surface: 'gravel' },
 ];
@@ -171,8 +171,8 @@ export const L00: LevelInput = {
     // Drop into the cellar; the hatch over its far end must be pushed open to climb out.
     { type: 'hatch', x: 355.2, y: 0, w: 1.6 },
     // The freight car starts rolling as you approach: run, jump on, ride it out.
-    { type: 'freight_car', x: 364, startAt: 359 },
-    { type: 'beacon', x: 392, h: 9 },
+    { type: 'freight_car', id: 'train0', x: 364, startAt: 359 },
+    { type: 'beacon', x: 389, h: 9 },
     // A car door to drag over a glowing pool, and a heavy lever only a relay body can throw.
     { type: 'dormant_body', x: 345, kind: 'drone' },
     { type: 'lever', x: 347, heavy: true, target: 'shutter' },
@@ -189,5 +189,5 @@ export const L00: LevelInput = {
     { x: 312, w: 1, action: 'tension', amount: 0, once: false },
   ],
   checkpoints: [44, 68, 96, 116, 140, 162, 206, 243, 263, 278, 291, 314, 341],
-  exit: { x: 396, next: 'L00' },
+  exit: { x: 392, next: 'L00' },
 };

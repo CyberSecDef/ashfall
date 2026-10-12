@@ -124,21 +124,31 @@ The spec is [ASHFALL-Game-Build-Handoff.md](ASHFALL-Game-Build-Handoff.md). This
     - 23 smoke checks: boot into L01 under the title, audio unlocking and playing
   - Known: the showcase video director still ends at the old sandbox exit; it needs updating before the next recording.
 
+- **M6 — Polish and performance** (code complete, waiting for the owner's iPhone check):
+  - Performance (`npm run perf`):
+    - the sky renders into a reduced-resolution target and is upscaled; its per-pixel fractal noise was the biggest single cost
+    - vignette, grain, flash and fade are one premultiplied full-screen pass instead of three
+    - result: GPU at iPhone 15 resolution holds a locked 60 fps on high in every scene; the software renderer (slow-device proxy) went from 20 fps to 27 from those changes, and to 60 once the quality controller settles on low
+  - Quality tiers (`src/engine/quality.ts`): high, medium, low cap the pixel ratio (2, 1.5, 1) and scale ash, god rays, sky resolution and grain. Auto mode steps down after about 2 s of slow frames and back up only after sustained headroom and a cooldown; manual override in the debug menu, remembered per device. Frame time and tier show in the debug overlay.
+  - The game and audio pause when the tab or app is hidden.
+  - PWA:
+    - manifest (fullscreen, landscape, icons drawn from `scripts/assets/icon.svg` by `scripts/gen-icons.mjs`), apple-touch-icon
+    - offline service worker (network-first pages, cache-first assets)
+    - on Android the first touch goes fullscreen and locks landscape; on iPhone, Add to Home Screen gives fullscreen
+  - Polish:
+    - L01's shaft was too shallow to stand under the closed hatch, so the child spawned forced into a crawl and almost invisible. It's deeper now, with moonlight seeping around the lid, a shaft of light once it opens, and a faint glow on the shelter wall so the child reads.
+    - the sandbox cellar got the same fix
+    - the showcase video director covers the new sandbox finale (heavy lever, shutter, hatch, freight car)
+  - README: the game, controls, running and testing, architecture, adding levels and mechanics, the level fields, and an entity reference (41 types) generated from the Zod schemas and doc comments. `npm run docs` refreshes it; a test fails if it is stale.
+  - Tests: 130 unit and integration tests. 25 smoke checks, including PWA (manifest, icons, service worker) and continue-after-reload in a story level.
+  - Not done (candidates for a later pass):
+    - art pass beyond silhouettes
+    - trimming Zod from the runtime bundle (about 35 KB of 219 KB gzipped)
+    - a real-device check on an iPhone (the owner's phone check stands in)
+
 ## In progress
 
-- **M6 — Polish and performance.** Steps:
-  - [x] Fewer full-screen passes: vignette, grain, flash and fade merged into one overlay pass. Cheaper sky on lower tiers.
-  - [x] Quality tiers (high, medium, low) driving pixel-ratio cap, ash count, god rays and sky detail. Auto-adapts to frame time with hysteresis; manual override in the debug menu.
-  - [x] Pause the game and audio when the tab or app is hidden
-  - [ ] PWA: manifest (fullscreen, landscape, icons), offline service worker, apple-touch-icon; Android fullscreen and orientation lock on first touch
-  - [x] Measure (`npm run perf`):
-    - GPU at iPhone resolution: a locked 60 fps on high in every scene
-    - software renderer (slow-device proxy): went from 20 fps to 27 fps from the sky and overlay changes alone, then settles on the low tier at a steady 60 fps
-    - the sky's per-pixel fractal noise was the biggest cost (about 15 ms of 49 on the slow path); it now renders at a fraction of screen resolution
-  - Measurement plan was: frame times on the GPU at iPhone resolution (2532×1170) and on a software renderer as a slow-device proxy, to confirm the tiers step down
-  - [ ] Polish: moonlight spilling through the L01 hatch; update the showcase video director for the new sandbox exit
-  - [ ] README: the game, controls, running and testing, architecture, the level schema, and an entity reference generated from the code. A test fails if the reference goes stale.
-  - [ ] Tests, smoke, deploy, hand off
+- Waiting for the owner to test M6 on an iPhone: https://cybersecdef.github.io/ashfall/
 
 ## Left to do
 
@@ -147,7 +157,7 @@ The spec is [ASHFALL-Game-Build-Handoff.md](ASHFALL-Game-Build-Handoff.md). This
 - [x] M3 — Data-driven levels: level schema with validation, entity registry, triggers, checkpoints, save/continue, `L00` sandbox
 - [x] M4 — Mechanics: tap-to-interact, drag/push/pull, levers and gates, hazards, threats, relay control, death and respawn
 - [x] M5 — Levels L01–L03, playable start to finish, with procedural audio and the title fade-in
-- [ ] M6 — Polish and performance: 60 fps on iPhone, quality tiers, PWA fullscreen, README
+- [x] M6 — Polish and performance (waiting for phone check): 60 fps on iPhone, quality tiers, PWA fullscreen, README
 
 ## Open questions
 

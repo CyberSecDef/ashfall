@@ -14,7 +14,8 @@
     "smoke": "node scripts/smoke.mjs",
     "validate": "vitest run tests/levels.test.ts",
     "record": "node scripts/record.mjs",
-    "perf": "node scripts/perf.mjs"
+    "perf": "node scripts/perf.mjs",
+    "docs": "DOCS_WRITE=1 vitest run tests/docs.test.ts"
   },
   "dependencies": {
     "three": "^0.186.1",

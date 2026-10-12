@@ -217,14 +217,20 @@ const check = (cond, msg) => {
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('ashfall.save.v1')));
   check(saved?.level === 'L00' && saved.checkpoint === 0, `save: checkpoint recorded (${JSON.stringify(saved)})`);
   check(saved?.memories?.includes('L00:rabbit'), 'save: memory collected and saved');
+  // Continue: progress in a story level survives a reload (sandbox saves are deliberately ignored on boot).
+  await page.evaluate(() => window.__ashfall.game.load('L01', -1));
+  await teleport(9);
+  await page.waitForTimeout(300);
   await page.reload();
   await page.waitForFunction(() => window.__ashfall);
   await page.waitForTimeout(300);
   const resumed = await state(page);
-  check(Math.abs(resumed.x - 26) < 0.5, `continue: reload resumes at the checkpoint (x ${resumed.x})`);
+  const lvl = await page.evaluate(() => window.__ashfall.game.level.id);
+  check(lvl === 'L01' && Math.abs(resumed.x - 8) < 0.5, `continue: reload resumes at the L01 checkpoint (${lvl} x ${resumed.x})`);
+  await page.evaluate(() => window.__ashfall.game.load('L00', -1));
 
   // Exit: walking past the exit fades out and loads the next level (L00 loops to itself for now).
-  await teleport(395.5);
+  await teleport(391.5);
   await page.keyboard.down('KeyD');
   await page.waitForTimeout(800);
   await page.keyboard.up('KeyD');
@@ -234,6 +240,17 @@ const check = (cond, msg) => {
   const next = await state(page);
   check(next.x < 5, `exit: next level loads at its spawn (x ${next.x})`);
   await page.screenshot({ path: join(outDir, 'desktop-after-exit.png') });
+
+  // PWA: manifest linked and valid, icons served, service worker registered.
+  const pwa = await page.evaluate(async () => {
+    const link = document.querySelector('link[rel=manifest]');
+    const m = await (await fetch(link.href)).json();
+    const icon = await fetch(new URL(m.icons[0].src, link.href));
+    const reg = await navigator.serviceWorker.getRegistration();
+    return { display: m.display, orientation: m.orientation, icon: icon.ok, sw: !!reg };
+  });
+  check(pwa.display === 'fullscreen' && pwa.orientation === 'landscape' && pwa.icon, `pwa: manifest (${pwa.display}, ${pwa.orientation}) and icons served`);
+  check(pwa.sw, 'pwa: service worker registered');
 
   check(errors.length === 0, `desktop: no page errors ${errors.join(' | ')}`);
   await browser.close();
