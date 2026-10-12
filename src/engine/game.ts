@@ -15,7 +15,7 @@ import { swayForeground } from '../fx/layers';
 import { Lightning } from '../fx/lightning';
 import { Overlay } from '../fx/overlay';
 import { Sky } from '../fx/sky';
-import { EPILOGUE_ID, PLAY_ORDER, getLevel, nextLevelId, storyMemories } from '../levels';
+import { EPILOGUE_ID, PLAY_ORDER, SANDBOX_ID, getLevel, nextLevelId, storyMemories } from '../levels';
 import type { Level } from '../levels/schema';
 import { CameraRig } from './camera';
 import { ChildView } from './child';
@@ -101,7 +101,8 @@ export class Game {
     const d = this.save.data;
     let id = firstLevel;
     let cp = -1;
-    if (d?.level) {
+    // The sandbox is debug-only: a save left in it (from testing) starts the story instead.
+    if (d?.level && d.level !== SANDBOX_ID) {
       try {
         getLevel(d.level);
         id = d.level;
