@@ -63,6 +63,14 @@ const check = (cond, msg) => {
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto(url);
   await page.waitForFunction(() => window.__ashfall);
+  // Boot: a new game starts in L01 under the title card.
+  await page.waitForTimeout(800);
+  check(await page.evaluate(() => window.__ashfall.game.level.id === 'L01'), 'boot: a new game starts at L01');
+  check(await page.evaluate(() => getComputedStyle(document.getElementById('title')).opacity > 0.3), 'boot: the title card is showing');
+  await page.waitForTimeout(4500);
+  check(await page.evaluate(() => Number(getComputedStyle(document.getElementById('title')).opacity) < 0.05), 'boot: the title fades away');
+  // Movement checks run in the sandbox.
+  await page.evaluate(() => window.__ashfall.game.load('L00', -1));
   await page.waitForTimeout(500);
   const s0 = await state(page);
 
@@ -120,6 +128,7 @@ const check = (cond, msg) => {
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto(url);
   await page.waitForFunction(() => window.__ashfall);
+  await page.evaluate(() => window.__ashfall.game.load('L00', -1));
   const s0 = await state(page);
   await page.keyboard.down('KeyD');
   await page.waitForTimeout(2500);
@@ -128,6 +137,9 @@ const check = (cond, msg) => {
   await page.keyboard.press('Space');
   await page.waitForTimeout(100);
   check(!(await state(page)).grounded, 'desktop: Space jumps');
+  const audio = await page.evaluate(() => { const a = window.__ashfall.game.audio; return { state: a.ctx?.state ?? 'none', played: a.played.slice(-40) }; });
+  check(audio.state === 'running', `audio: unlocked by the first key press (${audio.state})`);
+  check(audio.played.some((c) => c.startsWith('step_')) && audio.played.includes('jump'), `audio: footsteps and jump cues play (${[...new Set(audio.played)].join(',')})`);
   await page.keyboard.up('KeyD');
   await page.keyboard.press('Backquote');
   await page.waitForTimeout(300);
@@ -212,7 +224,7 @@ const check = (cond, msg) => {
   check(Math.abs(resumed.x - 26) < 0.5, `continue: reload resumes at the checkpoint (x ${resumed.x})`);
 
   // Exit: walking past the exit fades out and loads the next level (L00 loops to itself for now).
-  await teleport(345.5);
+  await teleport(395.5);
   await page.keyboard.down('KeyD');
   await page.waitForTimeout(800);
   await page.keyboard.up('KeyD');

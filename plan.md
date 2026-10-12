@@ -104,29 +104,29 @@ The spec is [ASHFALL-Game-Build-Handoff.md](ASHFALL-Game-Build-Handoff.md). This
   - The recorder aborts on any death, so a broken take can't loop silently.
   - Not yet done: entity art is placeholder silhouettes (an asset pass comes later); sound cues are recorded but silent until M5.
 
+- **M5 — Levels L01–L03, audio, title** (code complete, waiting for the owner's iPhone check):
+  - Story levels as data files, each following the spec's outline:
+    - **L01 The Shelter:** hatch, woods, ditch, crawl, the log bridge over a stream, the cart-to-embankment climb, the highway, the dog and the culvert, the convoy, the rabbit back past the hatch
+    - **L02 The Dead Suburb:** the car door over a glowing pool, the crate along the flowerbed onto the bench to reach the porch lever, two searchlight stretches with grass, a wreck and shadow, the marchers, the drawing in a dead-end basement nook
+    - **L03 The Relay Yard:** the mitten behind the first shed, the transmitter, a drone throwing the heavy lever to raise the shutter, a drone holding the plate, the guard's alarm and the run over a parked wagon onto the moving freight car, the airship
+    - **L04 The Signal:** the epilogue, only with all three memories
+  - New mechanics: `hatch`, `freight_car`, `beacon`, door/plank looks, radiation pools, heavy levers, shutters (`openTo`), guard `alarm`. Scrambles follow moving solids; boxes stop at the foot of steep walls.
+  - Audio (`src/audio/`), all synthesized with Web Audio:
+    - wind with gusts and a per-level drone
+    - distant groans and rumbles
+    - a tension pad, thunder after lightning
+    - surface-aware footsteps and foley
+    - a synth for every cue, panned and attenuated by distance
+    - unlocks on the first touch or key; a debug sound toggle
+  - Title card ("ASHFALL", the only text) on boot and after the ending. Finishing L03 goes to the epilogue if every memory was found, then the title and a new game with memories kept.
+  - Tests:
+    - 123 unit and integration tests, including headless playthroughs that finish L01–L04 with zero deaths and every memory, and a cue-coverage test across 40+ cues
+    - 23 smoke checks: boot into L01 under the title, audio unlocking and playing
+  - Known: the showcase video director still ends at the old sandbox exit; it needs updating before the next recording.
+
 ## In progress
 
-- **M5 — Levels L01–L03, audio, title.** Steps:
-  - [x] New mechanics the story levels need, each a new entity type or param, with a test and an L00 sandbox instance:
-    - `hatch`: a shelter lid you push open
-    - `freight_car`: a moving rail car you can jump onto
-    - car-door plank (`draggable_log` look)
-    - radiation `pool` mode (a plank over it keeps you safe)
-    - `heavy` lever that only a relay body can pull
-    - gate `openTo` (a shutter that only lifts enough to crawl under)
-    - guard `alarm` (chases you down)
-    - also fixed: a scramble onto a moving solid (the freight car) now follows it instead of dropping off the back
-  - [ ] Procedural audio (`src/audio/`), Web Audio only, no files:
-    - wind and a per-level drone
-    - surface-aware footsteps, landings, scrambles, crawl rustle
-    - every entity cue, positioned and panned by distance
-    - thunder after lightning, and a tension pad
-    - unlocks on the first touch or key (iOS)
-  - [ ] Title fade-in (the only text in the game) on boot and after the ending
-  - [ ] Endings: after L03, fade to the title and start a new game (memories kept). With all three memories, an epilogue level first (`L04`, the signal).
-  - [ ] L01 The Shelter, L02 The Dead Suburb, L03 The Relay Yard, as level data files per the spec
-  - [ ] Headless playthrough tests: every level completed start to finish with no deaths, memories included. A cue-coverage test: every sound cue fired has a synth.
-  - [ ] Smoke, screenshots, deploy, hand off for the phone check
+- Waiting for the owner to test M5 on an iPhone: https://cybersecdef.github.io/ashfall/
 
 ## Left to do
 
@@ -134,7 +134,7 @@ The spec is [ASHFALL-Game-Build-Handoff.md](ASHFALL-Game-Build-Handoff.md). This
 - [x] M2 — World and depth: all depth layers including the sparse foreground, fog, ash, grain, vignette, camera follow, blue scarf animation
 - [x] M3 — Data-driven levels: level schema with validation, entity registry, triggers, checkpoints, save/continue, `L00` sandbox
 - [x] M4 — Mechanics: tap-to-interact, drag/push/pull, levers and gates, hazards, threats, relay control, death and respawn
-- [ ] M5 — Levels L01–L03, playable start to finish, with procedural audio and the title fade-in
+- [x] M5 — Levels L01–L03 (waiting for phone check), playable start to finish, with procedural audio and the title fade-in
 - [ ] M6 — Polish and performance: 60 fps on iPhone, quality tiers, PWA fullscreen, README
 
 ## Open questions
