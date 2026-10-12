@@ -3,6 +3,7 @@
 
 import type { EntitySpec } from '../levels/schema';
 import { background_event } from './background_event';
+import { beacon } from './beacon';
 import { body } from './body';
 import { boulder } from './boulder';
 import { camera_hint } from './camera_hint';
@@ -84,6 +85,7 @@ export const registry: { [K in EntityType]: EntityDefinition<K> } = {
   cover,
   hatch,
   freight_car,
+  beacon,
   relay_transmitter,
   dormant_body,
 };

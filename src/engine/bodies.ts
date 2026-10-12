@@ -82,8 +82,11 @@ export class DynBox {
     let moved = 0;
     for (let i = 0; i < steps; i++) {
       const lead = dir > 0 ? s.maxX + step : s.minX + step;
-      const groundAhead = this.coll.terrain.heightAt(lead);
+      const t = this.coll.terrain;
+      const groundAhead = t.heightAt(lead);
       if (groundAhead > s.minY + BOX_STEP) break; // terrain wall
+      // The foot of a near-vertical wall is a wall, not a step to ride up.
+      if (groundAhead > s.minY + 0.005 && t.slopeAt(lead) * dir > 2.5) break;
       // Solids taller than a small step block; lower ones (a plate, a curb) get climbed.
       if (this.coll.overlap(s.minX + step, s.maxX + step, s.minY + BOX_STEP, s.maxY - EPS, s)) break;
       s.minX += step;

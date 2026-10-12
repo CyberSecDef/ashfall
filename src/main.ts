@@ -30,6 +30,7 @@ const menu = (): DebugMenuItem[][] => [
       },
     },
     { label: 'reset save', action: () => game.save.reset() },
+    { label: game.audio.muted ? 'sound: off' : 'sound: on', action: () => game.audio.setMuted(!game.audio.muted) },
   ],
 ];
 const debug = new Debug(document.getElementById('debug')!, renderer.scene, menu);

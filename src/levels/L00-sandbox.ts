@@ -172,6 +172,7 @@ export const L00: LevelInput = {
     { type: 'hatch', x: 355.2, y: 0, w: 1.6 },
     // The freight car starts rolling as you approach: run, jump on, ride it out.
     { type: 'freight_car', x: 364, startAt: 359 },
+    { type: 'beacon', x: 392, h: 9 },
     // A car door to drag over a glowing pool, and a heavy lever only a relay body can throw.
     { type: 'dormant_body', x: 345, kind: 'drone' },
     { type: 'lever', x: 347, heavy: true, target: 'shutter' },

@@ -97,6 +97,15 @@ export class SaveGame {
     }
   }
 
+  /** After the ending: start over at the first level, keeping memories (and marking the game complete). */
+  newGame(firstLevel: string): void {
+    const memories = this.data?.memories ?? [];
+    const flags = (this.data?.flags ?? []).filter((f) => f !== 'relay');
+    if (!flags.includes('complete')) flags.push('complete');
+    this.data = { version: 1, level: firstLevel, checkpoint: -1, memories, flags };
+    this.write();
+  }
+
   hasMemory(memoryId: string): boolean {
     return this.memories.includes(memoryId);
   }

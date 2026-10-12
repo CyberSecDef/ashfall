@@ -7,13 +7,15 @@
 // Nothing in here knows about any particular level.
 
 import * as THREE from 'three';
+import { AudioEngine } from '../audio/audio';
+import { Foley } from '../audio/foley';
 import { Ash } from '../fx/ash';
 import { updateGodRays } from '../fx/godrays';
 import { swayForeground } from '../fx/layers';
 import { Lightning } from '../fx/lightning';
 import { Overlay } from '../fx/overlay';
 import { Sky } from '../fx/sky';
-import { getLevel, nextLevelId } from '../levels';
+import { EPILOGUE_ID, PLAY_ORDER, getLevel, nextLevelId, storyMemories } from '../levels';
 import type { Level } from '../levels/schema';
 import { CameraRig } from './camera';
 import { ChildView } from './child';
@@ -22,6 +24,7 @@ import type { Player } from './player';
 import type { Renderer } from './renderer';
 import { LevelRuntime } from './runtime';
 import { SaveGame } from './save';
+import { Title } from './title';
 
 /** Seconds the child lies still before the fade starts. */
 const DEATH_PAUSE = 0.7;
@@ -42,6 +45,11 @@ export class Game {
   readonly sky: Sky;
   readonly ash = new Ash(0);
   readonly rig: CameraRig;
+  readonly audio = new AudioEngine();
+  readonly title = new Title();
+  /** Endings reached this session (for debug and tests). */
+  endings = 0;
+  private readonly foley = new Foley((cue, x) => this.audio.play(cue, x));
   current!: LevelRuntime;
   /** Last sound cue fired (until M5's audio engine plays them). */
   lastCue = '';
@@ -57,6 +65,8 @@ export class Game {
   private readonly baseHemi: number;
   private time = 0;
   private respawning = false;
+  private lastFlash = 0;
+  private thunderIn = -1;
   /** Entity states captured when each checkpoint was reached, by "level:checkpoint". */
   private readonly snapshots = new Map<string, unknown[]>();
   private readonly raycaster = new THREE.Raycaster();
@@ -102,7 +112,31 @@ export class Game {
     }
     this.load(id, cp);
     this.overlay.fade = 1;
-    this.fadeTo(0, 1.6);
+    this.fade = null;
+    this.title.show(() => this.fadeTo(0, 2.4));
+  }
+
+  /** The story's last level is done: the epilogue if every memory was found, else the ending. */
+  private finale(): void {
+    const all = storyMemories().every((m) => this.save.hasMemory(m));
+    if (all && levelExists(EPILOGUE_ID)) {
+      this.save.enter(EPILOGUE_ID);
+      this.transition(() => this.load(EPILOGUE_ID, -1), 2.2, 2.4);
+    } else {
+      this.ending();
+    }
+  }
+
+  /** Fade to black, the title, then a new game at the first level (memories kept). */
+  private ending(): void {
+    this.endings++;
+    this.save.newGame(PLAY_ORDER[0]);
+    this.snapshots.clear();
+    this.fadeTo(1, 2.6, () => {
+      this.load(PLAY_ORDER[0], -1);
+      this.overlay.fade = 1;
+      this.title.show(() => this.fadeTo(0, 2.4), 3);
+    });
   }
 
   /** Build a level from its data file and place the child at a checkpoint (-1 = spawn). */
@@ -117,6 +151,8 @@ export class Game {
     this.sky.setPalette(level.palette);
     this.ash.setDensity(level.ambience.ash);
     this.lightning.setFrequency(level.ambience.lightning);
+    this.audio.setAmbience(level.ambience);
+    this.foley.reset();
     this.rig.resetHint();
     this.respawning = false;
 
@@ -128,15 +164,17 @@ export class Game {
       lightning: this.lightning,
       snapshot: this.snapshots.get(`${level.id}:${checkpoint}`),
       hooks: {
-        sound: (cue) => this.sound(cue),
+        sound: (cue, x) => this.sound(cue, x),
         checkpoint: (i) => {
           this.save.reach(level.id, i);
           this.snapshots.set(`${level.id}:${i}`, rt.snapshot());
         },
         exit: () => {
+          this.snapshots.clear();
+          if (level.id === EPILOGUE_ID) return this.ending();
+          if (level.id === PLAY_ORDER[PLAY_ORDER.length - 1] && !level.exit.next) return this.finale();
           const next = nextLevelId(level.id);
           this.save.enter(next);
-          this.snapshots.clear();
           this.transition(() => this.load(next, -1), 1.6, 1.8);
         },
         childDied: () => {
@@ -184,8 +222,9 @@ export class Game {
     this.transition(() => this.load(level.id, checkpoint), 0.3, 0.5);
   }
 
-  sound(cue: string): void {
+  sound(cue: string, x?: number): void {
     this.lastCue = cue;
+    this.audio.play(cue, x);
   }
 
   /** Fixed-rate game logic. */
@@ -221,6 +260,14 @@ export class Game {
     const flash = this.lightning.update(dt);
 
     rt.frame(dt);
+    this.foley.update(rt);
+    // Thunder follows each lightning strike after a second or three.
+    if (flash > 0.5 && this.lastFlash <= 0.5 && this.thunderIn < 0) this.thunderIn = 1 + Math.random() * 2.2;
+    this.lastFlash = flash;
+    if (this.thunderIn >= 0) {
+      this.thunderIn -= dt;
+      if (this.thunderIn < 0) this.audio.play('thunder');
+    }
     this.child.update(rt.child, dt, wind, rt.terrain.depthAt(rt.child.x));
     this.rig.update(actor, dt, depth);
     swayForeground(rt.foreground, this.time, wind);
@@ -233,6 +280,7 @@ export class Game {
 
     this.tension += (rt.effects.tension - this.tension) * (1 - Math.exp(-dt * 1.5));
     this.overlay.intensity = Math.min(1.5, this.tension + rt.effects.radiation * 1.2);
+    this.audio.update(dt, actor.x, this.tension + rt.effects.radiation);
     if (this.fade) {
       const f = this.fade;
       f.t = Math.min(1, f.t + dt / f.seconds);
@@ -246,5 +294,14 @@ export class Game {
     r.render();
     this.sceneDraws = r.three.info.render.calls;
     this.overlay.render(r.three);
+  }
+}
+
+function levelExists(id: string): boolean {
+  try {
+    getLevel(id);
+    return true;
+  } catch {
+    return false;
   }
 }

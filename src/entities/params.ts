@@ -211,6 +211,9 @@ export const entityParams = {
     startAt: z.number().optional(),
   }),
 
+  /** A lattice radio mast with a slow pale beacon at the top. Decorative: the signal the child walks toward. */
+  beacon: z.object({ h: z.number().positive().default(10) }),
+
   // ---- relay ---------------------------------------------------------------------
 
   /** Picking it up grants the relay: tap a dormant body to control it. */
@@ -265,6 +268,7 @@ export const entitySpec = z.discriminatedUnion('type', [
   variant('cover'),
   variant('hatch'),
   variant('freight_car'),
+  variant('beacon'),
   variant('relay_transmitter'),
   variant('dormant_body'),
 ]);
