@@ -31,6 +31,35 @@ describe('every level file', () => {
   });
 });
 
+describe('checkpoints', () => {
+  it('are all safe to stand still at for 30 seconds (no respawn into a death loop)', async () => {
+    const THREE = await import('three');
+    const { CameraRig } = await import('../src/engine/camera');
+    const { emptyInput } = await import('../src/engine/input');
+    const { LevelRuntime } = await import('../src/engine/runtime');
+    const { SaveGame } = await import('../src/engine/save');
+    const { Lightning } = await import('../src/fx/lightning');
+    const unsafe: string[] = [];
+    for (const level of levels().values()) {
+      const count = level.checkpoints.length + level.entities.filter((e) => e.type === 'checkpoint').length;
+      for (let cp = -1; cp < count; cp++) {
+        const rt = new LevelRuntime({
+          level,
+          checkpoint: cp,
+          save: new SaveGame(null),
+          rig: new CameraRig(new THREE.PerspectiveCamera()),
+          lightning: new Lightning(0),
+          visuals: false,
+          hooks: { sound() {}, checkpoint() {}, exit() {}, childDied() {} },
+        });
+        for (let i = 0; i < 30 * 60 && !rt.child.dead; i++) rt.step(1 / 60, emptyInput());
+        if (rt.child.dead) unsafe.push(`${level.id} checkpoint ${cp} (x ${rt.checkpoints[cp] ?? level.spawn.x}): ${rt.deathCause}`);
+      }
+    }
+    expect(unsafe).toEqual([]);
+  });
+});
+
 describe('entity registry', () => {
   it('has a behavior for every entity type in the schema', async () => {
     // Importing the registry pulls in Three.js; that is fine in Node.

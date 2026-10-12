@@ -54,12 +54,20 @@ for (;;) {
     g.frame(1 / 30);
     const p = g.current.controlled;
     const warn = window.__dirWarn.splice(0);
+    if (g.deaths !== (window.__lastDeaths ?? 0)) {
+      window.__lastDeaths = g.deaths;
+      warn.push(`death (${g.current.deathCause}) at x=${g.current.child.x.toFixed(2)}, step ${d.step}`);
+    }
     return { done: d.done, step: d.step, x: p.x, deaths: g.deaths, warn };
   });
   await page.screenshot({ path: join(framesDir, `${String(frame).padStart(6, '0')}.jpg`), type: 'jpeg', quality: 92 });
   frame++;
   for (const w of s.warn) console.log(`WARN at ${(frame / FPS).toFixed(1)}s: ${w}`);
   if (frame % 150 === 0) console.log(`${(frame / FPS).toFixed(0)}s  step ${s.step}  x ${s.x.toFixed(1)}  deaths ${s.deaths}  (${((Date.now() - t0) / 1000).toFixed(0)}s elapsed)`);
+  if (s.deaths > 0) {
+    console.error('The director died; fix the choreography (see WARN above). Not encoding.');
+    process.exit(1);
+  }
   if (s.done || frame > FPS * 420) break;
 }
 const deaths = await page.evaluate(() => window.__ashfall.game.deaths);
@@ -68,7 +76,7 @@ server.close();
 console.log(`captured ${frame} frames (${(frame / FPS).toFixed(1)} s), deaths ${deaths}; encoding...`);
 
 await new Promise((res, rej) => {
-  const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', String(FPS), '-i', join(framesDir, '%06d.jpg'), '-c:v', 'libx264', '-preset', 'slow', '-crf', '20', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', out], { stdio: 'inherit' });
+  const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-framerate', String(FPS), '-i', join(framesDir, '%06d.jpg'), '-c:v', 'libx264', '-preset', 'slow', '-crf', '26', '-maxrate', '4M', '-bufsize', '8M', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', out], { stdio: 'inherit' });
   ff.on('exit', (code) => (code === 0 ? res() : rej(new Error(`ffmpeg exited ${code}`))));
 });
 console.log(`wrote ${out}`);

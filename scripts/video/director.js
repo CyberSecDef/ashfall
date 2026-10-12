@@ -110,15 +110,15 @@
     const d = ent('patrol_drone').debug();
     return d.dir < 0 && d.x < 281.8;
   });
-  go(292.5, { walk: true });
+  go(290.5, { walk: true });
   wait(0.3);
 
   // The guard: hide behind the wreck, follow him, hold still in the shadow as he passes, slip away.
-  fadeTo(294);
+  fadeTo(291);
   go(296.8, { walk: true });
   until(() => {
     const d = ent('guard').debug();
-    return d.dir > 0 && d.pause <= 0 && d.x > 304.6;
+    return d.dir > 0 && d.pause <= 0 && d.x > 302.5;
   });
   go(303.0, { walk: true });
   until(() => {
@@ -233,12 +233,18 @@
           s.from ??= a.x;
           const reached = s.x >= s.from ? a.x >= s.x - 0.02 : a.x <= s.x + 0.02;
           if (t > 40) window.__dirWarn.push(`move to ${s.x} timed out at x=${a.x.toFixed(2)}`);
+          // Walking out of the exit ends the show (the sandbox loops to its own start).
+          if (g.current.exiting) {
+            i = steps.length - 1;
+            t = 0;
+            break;
+          }
           if (reached || t > 40) next();
           break;
         }
         case 'end':
-          if (t === dt) g.current.exiting || g.transition(() => {}, 1.5, 999);
-          if (t > 3.5) {
+          // Hold on the fade to black, then stop before the next level appears.
+          if (t > 1.9) {
             this.done = true;
             input.poll = realPoll;
           }

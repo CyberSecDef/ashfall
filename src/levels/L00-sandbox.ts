@@ -151,7 +151,7 @@ export const L00: LevelInput = {
     { type: 'patrol_drone', x: 279, from: 279, to: 288 },
     // Hide in the shadow while the guard walks past, then slip away behind him.
     { type: 'cover', x: 302, w: 2, kind: 'shadow' },
-    { type: 'guard', x: 307, from: 299, to: 308 },
+    { type: 'guard', x: 305, from: 299, to: 306 },
     { type: 'cover', x: 296, w: 1.6, kind: 'wreck' },
 
     // ---- relay ----
@@ -172,6 +172,6 @@ export const L00: LevelInput = {
     { x: 246, w: 1, action: 'signal', target: 'dog1' },
     { x: 312, w: 1, action: 'tension', amount: 0, once: false },
   ],
-  checkpoints: [44, 68, 96, 116, 140, 162, 206, 243, 263, 278, 294, 314],
+  checkpoints: [44, 68, 96, 116, 140, 162, 206, 243, 263, 278, 291, 314],
   exit: { x: 346, next: 'L00' },
 };
