@@ -4,7 +4,7 @@
 import * as THREE from 'three';
 import type { EntityDefinition } from './types';
 import { entityY } from './types';
-import { addSolid, addUse, silhouetteMaterial, zAt } from './visuals';
+import { PALE, addSolid, addUse, glowMaterial, silhouetteMaterial, zAt } from './visuals';
 
 export const hatch: EntityDefinition<'hatch'> = {
   create(spec, ctx) {
@@ -32,6 +32,21 @@ export const hatch: EntityDefinition<'hatch'> = {
     frame.position.set(spec.x, y - 0.02, zAt(ctx, spec.x, -0.2));
     ctx.group.add(hinge, frame);
 
+    // Moonlight: a thin bright seam around the closed lid, then a soft shaft spilling in once it's open.
+    const seam = new THREE.Mesh(new THREE.PlaneGeometry(spec.w + 0.1, 0.03), glowMaterial(PALE, 0.5));
+    seam.position.set(spec.x, y - 0.05, zAt(ctx, spec.x, 0.45));
+    const shaftGeo = new THREE.PlaneGeometry(spec.w * 0.9, 1.6);
+    shaftGeo.translate(0, -0.8, 0);
+    const shaftMat = glowMaterial(PALE, 0);
+    const shaft = new THREE.Mesh(shaftGeo, shaftMat);
+    shaft.position.set(spec.x + 0.15, y + 0.05, zAt(ctx, spec.x, 0.3));
+    shaft.rotation.z = -0.18;
+    ctx.group.add(seam, shaft);
+    // A dim lamp somewhere below lights the shelter's back wall, so the child reads against it.
+    const back = new THREE.Mesh(new THREE.PlaneGeometry(spec.w * 0.95, 1.25), glowMaterial(PALE, 0.09));
+    back.position.set(spec.x, y - 0.62, zAt(ctx, spec.x, -0.9));
+    ctx.group.add(back);
+
     addUse(
       ctx,
       {
@@ -55,6 +70,8 @@ export const hatch: EntityDefinition<'hatch'> = {
       frame(dt) {
         swing += ((open ? 1 : 0) - swing) * (1 - Math.exp(-dt * 3));
         hinge.rotation.z = swing * 1.9;
+        (seam.material as THREE.MeshBasicMaterial).opacity = (1 - swing) * (0.35 + 0.15 * Math.sin(ctx.time * 2.3));
+        shaftMat.opacity = swing * 0.14;
       },
       snapshot: () => open,
       restore: (s) => {

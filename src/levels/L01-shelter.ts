@@ -32,8 +32,8 @@ export const L01: LevelInput = {
     { x: -4, y: 0 },
     { x: 0, y: 0, sharp: true },
     // The shelter shaft, under the hatch.
-    { x: 0.1, y: -1.0, sharp: true, surface: 'concrete' },
-    { x: 1.9, y: -1.0, sharp: true, surface: 'concrete' },
+    { x: 0.1, y: -1.2, sharp: true, surface: 'concrete' },
+    { x: 1.9, y: -1.2, sharp: true, surface: 'concrete' },
     { x: 2.0, y: 0, sharp: true, surface: 'dirt' },
     // Up the wooded hillside.
     { x: 8, y: 0.9, surface: 'grass' },

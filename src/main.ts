@@ -59,6 +59,27 @@ window.addEventListener('keydown', (e) => {
 
 game.continueOrStart(PLAY_ORDER[0]);
 
+// Installable and playable offline (production builds only).
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+
+// On browsers that allow it (Android Chrome), go fullscreen and lock landscape
+// on the first touch. iPhone Safari doesn't; there, "Add to Home Screen" gives fullscreen.
+const standalone = matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches;
+if (!standalone) {
+  const goFullscreen = () => {
+    window.removeEventListener('touchend', goFullscreen);
+    const el = document.documentElement as HTMLElement & { requestFullscreen?: (o?: object) => Promise<void> };
+    el.requestFullscreen?.({ navigationUI: 'hide' })
+      .then(() => (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> }).lock?.('landscape'))
+      .catch(() => {});
+  };
+  window.addEventListener('touchend', goFullscreen);
+}
+
 let last = performance.now();
 let acc = 0;
 
