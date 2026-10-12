@@ -70,12 +70,20 @@ export const feral_dog: EntityDefinition<'feral_dog'> = {
       type: 'feral_dog',
       id: spec.id,
       x: spec.x,
+      signal(name) {
+        if (name === 'activate' && state !== 'chase' && !ctx.player.dead) {
+          state = 'chase';
+          stuck = 0;
+          ctx.sound('dog_bark');
+        }
+      },
+      debug: () => ({ x: dog.x, state }),
       update(dt) {
         const c = ctx.player;
         const dx = c.x - dog.x;
         input.left = input.right = input.up = false;
         if (state === 'sleep') {
-          if (Math.abs(dx) < spec.range && canSeeChild(ctx, dog.x, dog.y + 0.5)) {
+          if (spec.wakeOnSight && Math.abs(dx) < spec.range && canSeeChild(ctx, dog.x, dog.y + 0.5)) {
             state = 'chase';
             stuck = 0;
             ctx.sound('dog_bark');

@@ -31,6 +31,7 @@ export const lever: EntityDefinition<'lever'> = {
       {
         x: () => spec.x,
         y: () => y,
+        range: 0.9,
         enabled: () => !(spec.once && on !== spec.on),
         use: () => {
           on = !on;

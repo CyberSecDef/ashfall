@@ -146,8 +146,14 @@ export const entityParams = {
 
   // ---- threats -------------------------------------------------------------------
 
-  /** Sleeps until the child comes within `range`, then chases. Can't crawl, can't climb. */
-  feral_dog: z.object({ range: z.number().positive().default(7), speed: z.number().positive().default(3.9), giveUpAfter: z.number().positive().default(4) }),
+  /** Sleeps until the child comes within `range` (or it gets 'activate'), then chases. Can't crawl, can't climb. */
+  feral_dog: z.object({
+    range: z.number().positive().default(7),
+    speed: z.number().positive().default(3.9),
+    giveUpAfter: z.number().positive().default(4),
+    /** false: sleeps through anything until signalled (walk right past it). */
+    wakeOnSight: z.boolean().default(true),
+  }),
   /** A tower light sweeping the ground between x - sweep and x + sweep. Lingering in the beam (not hidden) is fatal. */
   searchlight: z.object({
     height: z.number().positive().default(7),

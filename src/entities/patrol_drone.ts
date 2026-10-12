@@ -41,6 +41,7 @@ export const patrol_drone: EntityDefinition<'patrol_drone'> = {
       type: 'patrol_drone',
       id: spec.id,
       x: spec.x,
+      debug: () => ({ x, dir, pause }),
       update(dt) {
         if (pause > 0) pause -= dt;
         else {

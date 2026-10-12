@@ -109,6 +109,8 @@ export interface Entity {
   /** Puzzle state to keep across a death (taken when a checkpoint is reached). */
   snapshot?(): unknown;
   restore?(state: unknown): void;
+  /** Live state for the debug overlay and scripted playthroughs (positions, facing). */
+  debug?(): Record<string, number | string | boolean>;
   dispose?(): void;
 }
 

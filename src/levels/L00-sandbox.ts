@@ -118,11 +118,11 @@ export const L00: LevelInput = {
     { type: 'pressure_plate', x: 168, w: 1.2, target: 'gate1' },
     { type: 'gate', id: 'gate1', x: 172 },
     { type: 'cart', x: 176 },
-    // A lever powers the lift through a cable; ride it up to the high ledge.
-    { type: 'lever', x: 180, target: 'cable1' },
-    { type: 'power_cable', id: 'cable1', x: 180.3, target: 'lift1', delay: 0.8 },
+    // Stand on the lift and throw the lever beside it; the cable carries power and up it goes.
+    { type: 'lever', x: 182.7, target: 'cable1' },
+    { type: 'power_cable', id: 'cable1', x: 182.9, target: 'lift1', delay: 0.8 },
     { type: 'lift', id: 'lift1', x: 184, travel: 2.2 },
-    { type: 'obstacle_high', x: 187.5, w: 3, h: 2.2, look: 'slab' },
+    { type: 'obstacle_high', x: 186.3, w: 3, h: 2.2, look: 'slab' },
     { type: 'draggable_log', x: 192 },
     { type: 'body', x: 195.5 },
     { type: 'valve', x: 198, target: 'belt' },
@@ -133,18 +133,19 @@ export const L00: LevelInput = {
     // Keep walking under the creaking slab; stopping is fatal.
     { type: 'falling_debris', x: 216, triggerAt: 215.3, delay: 0.5, dropHeight: 6 },
     { type: 'wire_trap', x: 221 },
-    { type: 'wire_trap', x: 224, target: 'slab2' },
-    { type: 'falling_debris', id: 'slab2', x: 227, delay: 0.2 },
     { type: 'deep_water', x: 230, w: 1.5 },
     { type: 'fall_height', x: 237, w: 1, killY: -2 },
+    // This wire drops a slab ahead of you: it blocks the way, then you climb it.
+    { type: 'wire_trap', x: 239.5, target: 'slab2' },
+    { type: 'falling_debris', id: 'slab2', x: 242.3, delay: 0.2 },
 
     // ---- threats ----
-    // A dog wakes when you pass close; run for the pipe.
-    { type: 'feral_dog', x: 247, range: 3, speed: 3.3 },
+    // Walk quietly past the sleeping dog... it wakes behind you. Run for the pipe (too narrow for it).
+    { type: 'feral_dog', id: 'dog1', x: 239, speed: 2.9, wakeOnSight: false },
     { type: 'pipe', x: 256, w: 3 },
     // Crawl through the grass while the searchlight sweeps.
-    { type: 'cover', x: 265, w: 10, kind: 'grass' },
-    { type: 'searchlight', x: 270, sweep: 4, period: 7 },
+    { type: 'cover', x: 266, w: 8, kind: 'grass' },
+    { type: 'searchlight', x: 270, sweep: 3, period: 7 },
     // Wait in the shadow while the drone passes.
     { type: 'cover', x: 282.5, w: 2.5, kind: 'shadow' },
     { type: 'patrol_drone', x: 279, from: 279, to: 288 },
@@ -168,6 +169,7 @@ export const L00: LevelInput = {
     { x: 60, w: 5, action: 'tension', amount: 0.6, once: false },
     { x: 66, w: 1, action: 'tension', amount: 0, once: false },
     { x: 244, w: 1, action: 'tension', amount: 0.5, once: false },
+    { x: 246, w: 1, action: 'signal', target: 'dog1' },
     { x: 312, w: 1, action: 'tension', amount: 0, once: false },
   ],
   checkpoints: [44, 68, 96, 116, 140, 162, 206, 243, 263, 278, 294, 314],

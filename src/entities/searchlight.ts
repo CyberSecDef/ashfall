@@ -45,6 +45,7 @@ export const searchlight: EntityDefinition<'searchlight'> = {
       type: 'searchlight',
       id: spec.id,
       x: spec.x,
+      debug: () => ({ spotX }),
       signal(name) {
         if (name === 'activate') on = true;
         if (name === 'deactivate') on = false;

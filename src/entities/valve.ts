@@ -27,6 +27,7 @@ export const valve: EntityDefinition<'valve'> = {
       {
         x: () => spec.x,
         y: () => y,
+        range: 0.9,
         enabled: () => turning === -1,
         use: () => {
           turning = 0;

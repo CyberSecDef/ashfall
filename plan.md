@@ -94,6 +94,12 @@ The spec is [ASHFALL-Game-Build-Handoff.md](ASHFALL-Game-Build-Handoff.md). This
   - Debug: `god` toggle (invulnerable child). The smoke bot uses it, with stuck-assist, to traverse the whole sandbox.
   - Tests: 100 unit and integration tests, including 22 puzzle and hazard scenarios run on the real runtime with scripted input. 18 smoke checks pass, including a full ~350 m playthrough.
   - Fixes found along the way: a teleport could trip a wire trap; boxes couldn't be shoved onto plates.
+  - Showcase video: `npm run build && npm run record` renders a scripted sandbox playthrough frame by frame (GPU through ANGLE when available) to an MP4. The director lives in `scripts/video/director.js`.
+  - Sandbox fixes found while choreographing the video:
+    - the dog sat ahead of the child; it now sleeps where you walk past it and wakes on a trigger behind you (`wakeOnSight: false`)
+    - the lift lever was out of reach of the lift, and a gap between lift and slab dropped riders
+    - the tripwire slab landed on walkers, and its placement left no run-up for the pool
+    - lever and valve reach widened to 0.9 m
   - Not yet done: entity art is placeholder silhouettes (an asset pass comes later); sound cues are recorded but silent until M5.
 
 ## In progress

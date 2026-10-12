@@ -12,7 +12,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "smoke": "node scripts/smoke.mjs",
-    "validate": "vitest run tests/levels.test.ts"
+    "validate": "vitest run tests/levels.test.ts",
+    "record": "node scripts/record.mjs"
   },
   "dependencies": {
     "three": "^0.186.1",

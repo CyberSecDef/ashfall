@@ -46,6 +46,7 @@ export const guard: EntityDefinition<'guard'> = {
       type: 'guard',
       id: spec.id,
       x: spec.x,
+      debug: () => ({ x, dir, pause }),
       update(dt) {
         const c = ctx.player;
         if (alerted > 0) {

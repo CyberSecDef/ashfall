@@ -56,6 +56,11 @@ let acc = 0;
 function frame(now: number): void {
   const dt = Math.min((now - last) / 1000, 0.25);
   last = now;
+  // Scripted capture (scripts/record.mjs) steps the game itself, frame by frame.
+  if ((window as unknown as { __ashfallManual?: boolean }).__ashfallManual) {
+    requestAnimationFrame(frame);
+    return;
+  }
   acc += dt;
   let steps = 0;
   while (acc >= STEP && steps < MAX_STEPS) {
