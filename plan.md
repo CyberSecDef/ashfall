@@ -69,29 +69,43 @@ The spec is [ASHFALL-Game-Build-Handoff.md](ASHFALL-Game-Build-Handoff.md). This
   - Fix: exiting into the same level (the sandbox loops to itself) kept the old checkpoint, so a reload resumed near the end. Entering a level now always resets its checkpoint (`save.enter`).
   - Note: Zod adds about 34 KB gzipped to the bundle. M6 can move to `zod/mini` or validate only at build time.
 
+- **M4 — Mechanics** (code complete, waiting for the owner's iPhone check):
+  - Collision core (`src/engine/collision.ts`):
+    - solid boxes: walls, step-ups, scramble targets, ceilings that force a crawl
+    - moving solids carry riders
+    - line-of-sight tests for watchers
+  - Controller (`src/engine/player.ts`):
+    - step-ups and scrambles onto boxes and ledges, mid-air grabs
+    - crawl forced under low ceilings, head bumps
+    - ladders and ropes, push/pull while interact is held
+    - shallow-water slowdown, fatal falls above 3.4 m
+    - `ActorParams` lets the same code drive the dog and relay bodies
+  - Movable boxes (`src/engine/bodies.ts`): gravity, stacking, shoved up small steps and plates, carts that roll on.
+  - Level runtime split from rendering (`src/engine/runtime.ts`), so puzzles run in tests with no WebGL. `Game` wraps it: the camera follows the controlled actor, screen taps map onto the gameplay plane, and a death becomes a limp collapse, a 0.7 s pause, a fade, then respawn at the checkpoint with puzzle state restored from a snapshot taken when that checkpoint was reached.
+  - Interaction: the nearest interactable gets a faint rim lift; a tap or E uses it. With nothing to use, a tap switches relay control.
+  - 33 new entity types, one file each in `src/entities/` (shared helpers in `visuals.ts`, `movable.ts`, `sight.ts`):
+    - obstacles: `obstacle_low`, `obstacle_high`, `log`, `boulder`, `fence` (optional crawl gap), `crawlspace`, `pipe`, `water`, `ladder`, `rope`
+    - movables: `crate`, `cart`, `draggable_log`, `body`
+    - mechanisms: `lever`, `valve`, `pressure_plate`, `gate`, `lift`, `conveyor`, `power_cable` (a visible flicker carries the signal)
+    - hazards: `radiation_zone` (no meter; grain and Geiger only), `falling_debris`, `wire_trap`, `deep_water`, `fall_height`
+    - threats: `feral_dog` (can't crawl or climb), `searchlight`, `patrol_drone`, `guard`, plus `cover` (grass, shadow, wreck) for the spec's hiding mechanic
+    - relay: `relay_transmitter` (ability saved as a flag), `dormant_body` (drone or survivor; heavy, strong, can't crawl or jump)
+  - L00 sandbox gallery: checkpointed stations for obstacles, water and climbing, movables and mechanisms, hazards, threats (each with a fair way past), and a relay puzzle where the drone must hold the plate while the child walks through the gate.
+  - Debug: `god` toggle (invulnerable child). The smoke bot uses it, with stuck-assist, to traverse the whole sandbox.
+  - Tests: 100 unit and integration tests, including 22 puzzle and hazard scenarios run on the real runtime with scripted input. 18 smoke checks pass, including a full ~350 m playthrough.
+  - Fixes found along the way: a teleport could trip a wire trap; boxes couldn't be shoved onto plates.
+  - Not yet done: entity art is placeholder silhouettes (an asset pass comes later); sound cues are recorded but silent until M5.
+
 ## In progress
 
-- **M4 — Mechanics.** Steps:
-  - [x] Collision core (`src/engine/collision.ts`): solid boxes the child can't pass, can stand on and scramble onto; ceilings that force crawling; moving solids that carry riders
-  - [x] Player controller on top of it (also drives relay bodies through `ActorParams`): step-ups, scramble onto boxes, crawl under ceilings, ladders and ropes, shallow-water slowdown, deadly falls
-  - [x] Movable boxes (`src/engine/bodies.ts`: crates, carts, logs, bodies): gravity, stacking, rest on terrain and other boxes; hold interact and move to push or pull
-  - [x] Interaction: the nearest interactable gets a subtle rim highlight; a tap or E uses it
-  - [x] Level runtime split from rendering (`src/engine/runtime.ts`) so puzzles run in tests without WebGL
-  - [x] Death and respawn: limp collapse, fade, respawn at the checkpoint within about 1.5 s, with puzzle state snapshotted at checkpoints
-  - [ ] Obstacles: `obstacle_low`, `obstacle_high`, `log`, `boulder`, `fence`, `crawlspace`, `pipe`, `water`, `ladder`, `rope`
-  - [ ] Movables: `crate`, `cart`, `draggable_log`, `body`
-  - [ ] Mechanisms: `lever`, `valve`, `pressure_plate`, `gate`, `lift`, `conveyor`, `power_cable`
-  - [ ] Hazards: `radiation_zone`, `falling_debris`, `wire_trap`, `deep_water`, `fall_height`
-  - [ ] Threats: `feral_dog`, `searchlight`, `patrol_drone`, `guard`, plus `cover` (grass, shadow) for hiding, which the spec's stealth needs
-  - [ ] Relay: `relay_transmitter`, `dormant_body`. Control a body with the same controls; tap the child to return. The ability is saved.
-  - [ ] L00 sandbox with every entity type; tests, smoke, deploy, hand off for the phone check
+- Waiting for the owner to test M4 on an iPhone: https://cybersecdef.github.io/ashfall/
 
 ## Left to do
 
 - [x] M1 — Scaffold
 - [x] M2 — World and depth: all depth layers including the sparse foreground, fog, ash, grain, vignette, camera follow, blue scarf animation
 - [x] M3 — Data-driven levels: level schema with validation, entity registry, triggers, checkpoints, save/continue, `L00` sandbox
-- [ ] M4 — Mechanics: tap-to-interact, drag/push/pull, levers and gates, hazards, threats, relay control, death and respawn
+- [x] M4 — Mechanics (waiting for phone check): tap-to-interact, drag/push/pull, levers and gates, hazards, threats, relay control, death and respawn
 - [ ] M5 — Levels L01–L03, playable start to finish, with procedural audio and the title fade-in
 - [ ] M6 — Polish and performance: 60 fps on iPhone, quality tiers, PWA fullscreen, README
 

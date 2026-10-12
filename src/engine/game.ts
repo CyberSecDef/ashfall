@@ -48,6 +48,8 @@ export class Game {
   /** Draw calls for the main scene last frame (excludes the overlay). */
   sceneDraws = 0;
   deaths = 0;
+  /** Debug: invulnerable child, carried across loads. */
+  god = false;
 
   private fade: Fade | null = null;
   private tension = 0;
@@ -142,6 +144,7 @@ export class Game {
         },
       },
     });
+    rt.invulnerable = this.god;
     this.current = rt;
     r.scene.add(rt.group);
 

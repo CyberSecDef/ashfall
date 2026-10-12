@@ -145,30 +145,47 @@ const check = (cond, msg) => {
   const run = await page.evaluate(() => {
     const a = window.__ashfall;
     const g = a.game;
+    g.god = true;
     g.load('L00', -1);
     const realPoll = g.input.poll.bind(g.input);
     let i = 0;
+    let crawl = 0;
     g.input.poll = () => {
       const s = g.input.state;
-      s.left = s.down = s.interact = s.interactPressed = false;
+      s.left = s.interact = s.interactPressed = false;
       s.right = true;
-      s.up = i % 50 < 25;
+      s.down = crawl > 0;
+      s.up = crawl <= 0 && i % 50 < 25;
     };
     const bad = [];
     let maxX = 0;
-    for (; i < 60 * 90 && !g.current.exiting; i++) {
+    let lastX = 0;
+    let stuck = 0;
+    let assists = 0;
+    for (; i < 60 * 240 && !g.current.exiting; i++) {
       g.step(1 / 60);
       g.frame(1 / 60);
       const c = a.renderer.camera.position;
       const p = g.player;
       maxX = Math.max(maxX, p.x);
       if (![c.x, c.y, c.z, p.x, p.y].every(Number.isFinite)) { bad.push({ i, x: p.x, cam: [c.x, c.y, c.z] }); break; }
+      // Stuck: try crawling for a second, then skip ahead (gates, deep pits, timing puzzles).
+      crawl--;
+      if (i % 60 === 0) {
+        if (p.x - lastX < 0.3) stuck++;
+        else stuck = 0;
+        lastX = p.x;
+        if (stuck === 1) crawl = 60;
+        if (stuck >= 2) { p.place(p.x + 2); g.rig.snap(p); stuck = 0; assists++; }
+      }
     }
     g.input.poll = realPoll;
-    return { bad, maxX: +maxX.toFixed(1), exiting: g.current.exiting, frames: i };
+    g.god = false;
+    g.current.invulnerable = false;
+    return { bad, maxX: +maxX.toFixed(1), exiting: g.current.exiting, frames: i, assists };
   });
   check(run.bad.length === 0, `playthrough: camera and child stay finite (${JSON.stringify(run.bad[0] ?? {})})`);
-  check(run.exiting, `playthrough: reaches the exit (max x ${run.maxX} in ${run.frames} frames)`);
+  check(run.exiting, `playthrough: reaches the exit (max x ${run.maxX} in ${run.frames} frames, ${run.assists} skips)`);
   // Wait for the exit transition to finish (software rendering in CI is slow).
   for (let k = 0; k < 60; k++) {
     const done = await page.evaluate(() => { const g = window.__ashfall.game; return !g.current.exiting && g.overlay.fade < 0.05; });
@@ -195,7 +212,7 @@ const check = (cond, msg) => {
   check(Math.abs(resumed.x - 26) < 0.5, `continue: reload resumes at the checkpoint (x ${resumed.x})`);
 
   // Exit: walking past the exit fades out and loads the next level (L00 loops to itself for now).
-  await teleport(111.5);
+  await teleport(345.5);
   await page.keyboard.down('KeyD');
   await page.waitForTimeout(800);
   await page.keyboard.up('KeyD');

@@ -75,6 +75,8 @@ export class LevelRuntime {
   deadFor = -1;
   deathCause = '';
   focus: Interactable | null = null;
+  /** Debug: the child ignores death. */
+  invulnerable = false;
 
   private readonly triggers: Triggers;
   private readonly hooks: RuntimeHooks;
@@ -209,6 +211,10 @@ export class LevelRuntime {
 
   kill(actor: Player, cause: string): void {
     if (actor.dead) return;
+    if (actor === this.child && this.invulnerable) {
+      actor.fatalFall = false;
+      return;
+    }
     actor.die();
     this.hooks.sound(`death_${cause}`);
     if (actor === this.child) {

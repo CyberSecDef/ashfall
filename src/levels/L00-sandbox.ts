@@ -41,6 +41,27 @@ const path: LevelInput['path'] = [
   { x: 98, y: 0, depth: 1.2 },
   { x: 106, y: 0.3, depth: 0 },
   { x: 114, y: 0 },
+  // ---- M4 gallery: one station per entity family, a checkpoint at each ----
+  // Obstacles (116-140) on flat ground.
+  { x: 140, y: 0 },
+  // Water (141-146): a shallow dip.
+  { x: 141.5, y: 0 },
+  { x: 142.5, y: -0.25 },
+  { x: 145, y: -0.25 },
+  { x: 146, y: 0 },
+  // Climbing and mechanisms (146-205) flat.
+  { x: 205, y: 0 },
+  // Hazards (206-243): a deep pool and a narrow pit.
+  { x: 230, y: 0, sharp: true },
+  { x: 230.15, y: -2.2, sharp: true },
+  { x: 231.35, y: -2.2, sharp: true },
+  { x: 231.5, y: 0, sharp: true },
+  { x: 237, y: 0, sharp: true },
+  { x: 237.1, y: -3.5, sharp: true },
+  { x: 237.9, y: -3.5, sharp: true },
+  { x: 238, y: 0, sharp: true },
+  // Threats and relay (243-350).
+  { x: 350, y: 0 },
 ];
 
 export const L00: LevelInput = {
@@ -76,6 +97,69 @@ export const L00: LevelInput = {
     { type: 'checkpoint', x: 26 },
     // Off the path, just past the ditch: a toy rabbit in the grass.
     { type: 'memory_collectible', id: 'rabbit', x: 18.5, kind: 'toy_rabbit' },
+
+    // ---- obstacles ----
+    { type: 'obstacle_low', x: 118, look: 'rubble' },
+    { type: 'obstacle_high', x: 122, look: 'car', w: 2 },
+    { type: 'log', x: 126 },
+    { type: 'boulder', x: 129.5, h: 0.6 },
+    { type: 'crawlspace', x: 133, w: 2.6, look: 'tree' },
+    { type: 'fence', x: 137.5, gap: 0.55 },
+
+    // ---- water, ladder, rope ----
+    { type: 'water', x: 141.5, w: 4.5 },
+    { type: 'ladder', x: 149.7, h: 2.5 },
+    { type: 'obstacle_high', x: 152, w: 4, h: 2.5, look: 'wall' },
+    { type: 'rope', x: 157, length: 2.4 },
+
+    // ---- movables and mechanisms ----
+    // Shove the crate onto the plate to raise the gate.
+    { type: 'crate', x: 164 },
+    { type: 'pressure_plate', x: 168, w: 1.2, target: 'gate1' },
+    { type: 'gate', id: 'gate1', x: 172 },
+    { type: 'cart', x: 176 },
+    // A lever powers the lift through a cable; ride it up to the high ledge.
+    { type: 'lever', x: 180, target: 'cable1' },
+    { type: 'power_cable', id: 'cable1', x: 180.3, target: 'lift1', delay: 0.8 },
+    { type: 'lift', id: 'lift1', x: 184, travel: 2.2 },
+    { type: 'obstacle_high', x: 187.5, w: 3, h: 2.2, look: 'slab' },
+    { type: 'draggable_log', x: 192 },
+    { type: 'body', x: 195.5 },
+    { type: 'valve', x: 198, target: 'belt' },
+    { type: 'conveyor', id: 'belt', x: 199.5, w: 4.5, speed: 1.2 },
+
+    // ---- hazards ----
+    { type: 'radiation_zone', x: 208, w: 3 },
+    // Keep walking under the creaking slab; stopping is fatal.
+    { type: 'falling_debris', x: 216, triggerAt: 215.3, delay: 0.5, dropHeight: 6 },
+    { type: 'wire_trap', x: 221 },
+    { type: 'wire_trap', x: 224, target: 'slab2' },
+    { type: 'falling_debris', id: 'slab2', x: 227, delay: 0.2 },
+    { type: 'deep_water', x: 230, w: 1.5 },
+    { type: 'fall_height', x: 237, w: 1, killY: -2 },
+
+    // ---- threats ----
+    // A dog wakes when you pass close; run for the pipe.
+    { type: 'feral_dog', x: 247, range: 3, speed: 3.3 },
+    { type: 'pipe', x: 256, w: 3 },
+    // Crawl through the grass while the searchlight sweeps.
+    { type: 'cover', x: 265, w: 10, kind: 'grass' },
+    { type: 'searchlight', x: 270, sweep: 4, period: 7 },
+    // Wait in the shadow while the drone passes.
+    { type: 'cover', x: 282.5, w: 2.5, kind: 'shadow' },
+    { type: 'patrol_drone', x: 279, from: 279, to: 288 },
+    // Hide in the shadow while the guard walks past, then slip away behind him.
+    { type: 'cover', x: 302, w: 2, kind: 'shadow' },
+    { type: 'guard', x: 307, from: 299, to: 308 },
+    { type: 'cover', x: 296, w: 1.6, kind: 'wreck' },
+
+    // ---- relay ----
+    // The plate only holds the gate while weighed down: send the drone to stand on it.
+    { type: 'relay_transmitter', x: 318 },
+    { type: 'dormant_body', id: 'drone1', x: 322, kind: 'drone' },
+    { type: 'pressure_plate', x: 327, w: 1.4, target: 'gate2' },
+    { type: 'gate', id: 'gate2', x: 333 },
+    { type: 'dormant_body', x: 338, kind: 'survivor' },
   ],
   triggers: [
     { x: 54, w: 2, action: 'signal', target: 'marchers' },
@@ -83,7 +167,9 @@ export const L00: LevelInput = {
     { x: 58, w: 1, action: 'sound', cue: 'distant_boom' },
     { x: 60, w: 5, action: 'tension', amount: 0.6, once: false },
     { x: 66, w: 1, action: 'tension', amount: 0, once: false },
+    { x: 244, w: 1, action: 'tension', amount: 0.5, once: false },
+    { x: 312, w: 1, action: 'tension', amount: 0, once: false },
   ],
-  checkpoints: [44, 68, 96],
-  exit: { x: 112, next: 'L00' },
+  checkpoints: [44, 68, 96, 116, 140, 162, 206, 243, 263, 278, 294, 314],
+  exit: { x: 346, next: 'L00' },
 };

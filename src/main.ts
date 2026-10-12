@@ -22,6 +22,13 @@ const menu = (): DebugMenuItem[][] => [
   ],
   [
     { label: 'respawn', action: () => game.respawn() },
+    {
+      label: game.god ? 'god: on' : 'god: off',
+      action: () => {
+        game.god = !game.god;
+        game.current.invulnerable = game.god;
+      },
+    },
     { label: 'reset save', action: () => game.save.reset() },
   ],
 ];

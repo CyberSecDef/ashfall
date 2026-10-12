@@ -84,15 +84,19 @@ export class DynBox {
       const lead = dir > 0 ? s.maxX + step : s.minX + step;
       const groundAhead = this.coll.terrain.heightAt(lead);
       if (groundAhead > s.minY + BOX_STEP) break; // terrain wall
-      if (this.coll.overlap(s.minX + step, s.maxX + step, s.minY + 0.04, s.maxY - EPS, s)) break;
+      // Solids taller than a small step block; lower ones (a plate, a curb) get climbed.
+      if (this.coll.overlap(s.minX + step, s.maxX + step, s.minY + BOX_STEP, s.maxY - EPS, s)) break;
       s.minX += step;
       s.maxX += step;
       moved += step;
-      // Shoved up a small step: lift onto it.
-      if (groundAhead > s.minY && this.grounded) {
-        const lift = groundAhead - s.minY;
-        s.minY += lift;
-        s.maxY += lift;
+      // Shoved up a small step (terrain or solid): lift onto it.
+      if (this.grounded) {
+        const f = this.coll.floor(s.minX, s.maxX, s.minY, BOX_STEP, s);
+        if (f.y > s.minY) {
+          const lift = f.y - s.minY;
+          s.minY += lift;
+          s.maxY += lift;
+        }
       }
     }
     return moved;
