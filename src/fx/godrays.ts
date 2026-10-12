@@ -9,6 +9,8 @@ let texture: THREE.Texture | null = null;
 
 function shaftTexture(): THREE.Texture {
   if (texture) return texture;
+  // Headless (tests): no canvas, so an empty texture stands in.
+  if (typeof document === 'undefined') return new THREE.Texture();
   const c = document.createElement('canvas');
   c.width = 64;
   c.height = 256;

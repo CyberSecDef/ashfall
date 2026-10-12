@@ -36,11 +36,19 @@ export class CameraRig {
 
   constructor(
     private readonly camera: THREE.PerspectiveCamera,
-    p: Player,
+    p?: Player,
   ) {
-    this.x = p.x;
-    this.y = p.y + CAMERA.height;
+    this.x = p?.x ?? 0;
+    this.y = (p?.y ?? 0) + CAMERA.height;
     this.apply();
+  }
+
+  /** Back to the default framing immediately (level loads). */
+  resetHint(): void {
+    this.current = { ...DEFAULT_HINT };
+    this.from = { ...DEFAULT_HINT };
+    this.to = { ...DEFAULT_HINT };
+    this.blend = 1;
   }
 
   get distance(): number {

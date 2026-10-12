@@ -17,6 +17,7 @@ export class ChildView {
   private readonly legL: THREE.Mesh;
   private readonly legR: THREE.Mesh;
   private phase = 0;
+  private deadTime = 0;
   private readonly scarf: Scarf;
   readonly ribbon: THREE.Mesh;
   private readonly ribbonPos: Float32Array;
@@ -146,7 +147,37 @@ export class ChildView {
         legA = 0.9 * Math.sin(c * Math.PI);
         break;
       }
+      case 'push':
+        // Lean into it, legs driving.
+        bodyTilt = -0.45;
+        bodyY = -0.05;
+        legA = Math.sin(this.phase * 0.7) * 0.5 * Math.min(1, speed * 2);
+        break;
+      case 'pull':
+        // Lean back, heels dug in (the figure faces the box, so lean away from it).
+        bodyTilt = 0.35;
+        bodyY = -0.06;
+        legA = Math.sin(this.phase * 0.7) * 0.45 * Math.min(1, speed * 2);
+        break;
+      case 'ladder':
+        bodyTilt = 0;
+        legA = Math.sin(p.y * 9) * 0.5;
+        break;
+      case 'frozen':
+        // Standing still, head bowed, while a relay body is controlled.
+        bodyTilt = -0.12;
+        bodyY = -0.02;
+        legA = 0;
+        break;
+      case 'dead':
+        // Limp collapse: fold forward and drop.
+        this.deadTime += dt;
+        bodyTilt = -1.45 * Math.min(1, this.deadTime * 3.2);
+        bodyY = -0.62 * Math.min(1, this.deadTime * 3.2);
+        legA = 0.3;
+        break;
     }
+    if (p.mode !== 'dead') this.deadTime = 0;
 
     const k = 1 - Math.exp(-dt * 14);
     this.body.rotation.z += (bodyTilt - this.body.rotation.z) * k;

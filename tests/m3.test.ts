@@ -22,7 +22,7 @@ describe('SaveGame', () => {
     s.reach('L01', 0);
     s.collect('L01:rabbit', 'L01');
     const again = new SaveGame(store);
-    expect(again.data).toEqual({ version: 1, level: 'L01', checkpoint: 0, memories: ['L01:rabbit'] });
+    expect(again.data).toEqual({ version: 1, level: 'L01', checkpoint: 0, memories: ['L01:rabbit'], flags: [] });
   });
 
   it('never moves backwards within a level, but resets the checkpoint on a new level', () => {

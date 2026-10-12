@@ -75,9 +75,9 @@ The spec is [ASHFALL-Game-Build-Handoff.md](ASHFALL-Game-Build-Handoff.md). This
   - [x] Collision core (`src/engine/collision.ts`): solid boxes the child can't pass, can stand on and scramble onto; ceilings that force crawling; moving solids that carry riders
   - [x] Player controller on top of it (also drives relay bodies through `ActorParams`): step-ups, scramble onto boxes, crawl under ceilings, ladders and ropes, shallow-water slowdown, deadly falls
   - [x] Movable boxes (`src/engine/bodies.ts`: crates, carts, logs, bodies): gravity, stacking, rest on terrain and other boxes; hold interact and move to push or pull
-  - [ ] Interaction: the nearest interactable gets a subtle rim highlight; a tap or E uses it
-  - [ ] Level runtime split from rendering (`src/engine/runtime.ts`) so puzzles run in tests without WebGL
-  - [ ] Death and respawn: limp collapse, fade, respawn at the checkpoint within about 1.5 s, with puzzle state snapshotted at checkpoints
+  - [x] Interaction: the nearest interactable gets a subtle rim highlight; a tap or E uses it
+  - [x] Level runtime split from rendering (`src/engine/runtime.ts`) so puzzles run in tests without WebGL
+  - [x] Death and respawn: limp collapse, fade, respawn at the checkpoint within about 1.5 s, with puzzle state snapshotted at checkpoints
   - [ ] Obstacles: `obstacle_low`, `obstacle_high`, `log`, `boulder`, `fence`, `crawlspace`, `pipe`, `water`, `ladder`, `rope`
   - [ ] Movables: `crate`, `cart`, `draggable_log`, `body`
   - [ ] Mechanisms: `lever`, `valve`, `pressure_plate`, `gate`, `lift`, `conveyor`, `power_cable`

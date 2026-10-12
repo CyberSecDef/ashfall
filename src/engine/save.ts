@@ -9,6 +9,8 @@ export interface SaveData {
   checkpoint: number;
   /** Collected memories as "L01:rabbit" ids. */
   memories: string[];
+  /** Abilities and story flags that persist across levels ("relay"). */
+  flags: string[];
 }
 
 export const SAVE_KEY = 'ashfall.save.v1';
@@ -40,7 +42,8 @@ export class SaveGame {
       if (!raw) return null;
       const d = JSON.parse(raw) as Partial<SaveData>;
       if (d.version !== 1 || typeof d.level !== 'string' || typeof d.checkpoint !== 'number' || !Array.isArray(d.memories)) return null;
-      return { version: 1, level: d.level, checkpoint: d.checkpoint, memories: d.memories.filter((m) => typeof m === 'string') };
+      const flags = Array.isArray(d.flags) ? d.flags.filter((f) => typeof f === 'string') : [];
+      return { version: 1, level: d.level, checkpoint: d.checkpoint, memories: d.memories.filter((m) => typeof m === 'string'), flags };
     } catch {
       return null;
     }
@@ -61,21 +64,35 @@ export class SaveGame {
   /** Record reaching a level/checkpoint. Never moves progress backwards within a level. */
   reach(level: string, checkpoint: number): void {
     const memories = this.data?.memories ?? [];
+    const flags = this.data?.flags ?? [];
     if (this.data && this.data.level === level && checkpoint <= this.data.checkpoint) return;
-    this.data = { version: 1, level, checkpoint, memories };
+    this.data = { version: 1, level, checkpoint, memories, flags };
     this.write();
   }
 
   /** Entering a level from its start (via an exit or a fresh load): always resets its checkpoint. */
   enter(level: string): void {
-    this.data = { version: 1, level, checkpoint: -1, memories: this.data?.memories ?? [] };
+    this.data = { version: 1, level, checkpoint: -1, memories: this.data?.memories ?? [], flags: this.data?.flags ?? [] };
     this.write();
   }
 
   collect(memoryId: string, level: string): void {
-    if (!this.data) this.data = { version: 1, level, checkpoint: -1, memories: [] };
+    if (!this.data) this.data = { version: 1, level, checkpoint: -1, memories: [], flags: [] };
     if (!this.data.memories.includes(memoryId)) {
       this.data.memories.push(memoryId);
+      this.write();
+    }
+  }
+
+  hasFlag(flag: string): boolean {
+    return this.data?.flags.includes(flag) ?? false;
+  }
+
+  /** Flags survive even without a level record yet (a session started in tests or debug). */
+  setFlag(flag: string): void {
+    if (!this.data) this.data = { version: 1, level: '', checkpoint: -1, memories: [], flags: [] };
+    if (!this.data.flags.includes(flag)) {
+      this.data.flags.push(flag);
       this.write();
     }
   }

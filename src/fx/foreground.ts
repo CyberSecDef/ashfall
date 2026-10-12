@@ -145,6 +145,8 @@ export function foregroundTexture(kind: ForegroundKind, variant: number): THREE.
   const w = Math.round(wm * PX_PER_M);
   const h = Math.round(hm * PX_PER_M);
   const pad = BLUR * 3;
+  // Headless (tests): no canvas, so an empty texture stands in.
+  if (typeof document === 'undefined') return new THREE.Texture();
   const canvas = document.createElement('canvas');
   canvas.width = w + pad * 2;
   canvas.height = h + pad * 2;

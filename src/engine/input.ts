@@ -61,6 +61,9 @@ export class Input {
   private tapped = new Set<string>();
   private pad: PadTouch | null = null;
   private interactTouches = new Set<number>();
+  private tapStarts = new Map<number, { x: number; y: number; t: number }>();
+  /** Short taps (screen coordinates) since the last read, for tapping things in the world. */
+  private taps: Array<{ x: number; y: number }> = [];
   private prevInteract = false;
   private listeners: Array<(touchCount: number) => void> = [];
 
@@ -103,6 +106,7 @@ export class Input {
         this.pad = { id: t.identifier, cx: t.clientX, cy: t.clientY, x: t.clientX, y: t.clientY };
       } else if (t.clientX >= half) {
         this.interactTouches.add(t.identifier);
+        this.tapStarts.set(t.identifier, { x: t.clientX, y: t.clientY, t: performance.now() });
       }
     }
   }
@@ -123,7 +127,19 @@ export class Input {
     for (const t of Array.from(e.changedTouches)) {
       if (this.pad && t.identifier === this.pad.id) this.pad = null;
       this.interactTouches.delete(t.identifier);
+      const start = this.tapStarts.get(t.identifier);
+      if (start && performance.now() - start.t < 300 && Math.hypot(t.clientX - start.x, t.clientY - start.y) < 20) {
+        this.taps.push({ x: t.clientX, y: t.clientY });
+      }
+      this.tapStarts.delete(t.identifier);
     }
+  }
+
+  /** Take the short taps since the last call. */
+  takeTaps(): Array<{ x: number; y: number }> {
+    const t = this.taps;
+    this.taps = [];
+    return t;
   }
 
   /** Sample every source into `state`. Call once per fixed update. */

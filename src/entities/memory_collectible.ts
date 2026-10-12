@@ -61,6 +61,8 @@ function mergeFlat(geos: THREE.BufferGeometry[]): THREE.BufferGeometry {
 let glintTexture: THREE.Texture | null = null;
 function glint(): THREE.Texture {
   if (glintTexture) return glintTexture;
+  // Headless (tests): no canvas, so an empty texture stands in.
+  if (typeof document === 'undefined') return new THREE.Texture();
   const c = document.createElement('canvas');
   c.width = c.height = 64;
   const ctx = c.getContext('2d')!;
