@@ -27,7 +27,7 @@ export class Renderer {
 
   constructor(container: HTMLElement) {
     this.three = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    this.three.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.three.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // the quality tier may lower this
     this.three.outputColorSpace = THREE.SRGBColorSpace;
     container.appendChild(this.three.domElement);
 

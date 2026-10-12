@@ -5,14 +5,6 @@
 import * as THREE from 'three';
 import type { Palette } from '../levels/types';
 
-const vert = /* glsl */ `
-  varying vec2 vUv;
-  void main() {
-    vUv = uv;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-
 const frag = /* glsl */ `
   uniform vec3 uTop;
   uniform vec3 uHorizon;
@@ -64,13 +56,29 @@ const frag = /* glsl */ `
   }
 `;
 
+/**
+ * The sky is drawn into a small render target (a fraction of the screen
+ * resolution) and upscaled: the clouds are soft, and per-pixel fractal noise
+ * at full phone resolution was the single most expensive thing in the frame.
+ */
 export class Sky {
   readonly mesh: THREE.Mesh;
   private readonly mat: THREE.ShaderMaterial;
+  private readonly target: THREE.WebGLRenderTarget;
+  private readonly scene = new THREE.Scene();
+  private readonly cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  /** Render-target size divisor (higher = cheaper, softer). Set by the quality tier. */
+  downscale = 3;
 
   constructor(palette: Palette, camera: THREE.PerspectiveCamera) {
     this.mat = new THREE.ShaderMaterial({
-      vertexShader: vert,
+      vertexShader: /* glsl */ `
+        varying vec2 vUv;
+        void main() {
+          vUv = position.xy * 0.5 + 0.5;
+          gl_Position = vec4(position.xy, 0.0, 1.0);
+        }
+      `,
       fragmentShader: frag,
       depthWrite: false,
       depthTest: false,
@@ -85,7 +93,17 @@ export class Sky {
         uAspect: { value: 1 },
       },
     });
-    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.mat);
+    const tri = new THREE.BufferGeometry();
+    tri.setAttribute('position', new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
+    const quad = new THREE.Mesh(tri, this.mat);
+    quad.frustumCulled = false;
+    this.scene.add(quad);
+
+    this.target = new THREE.WebGLRenderTarget(64, 32, { depthBuffer: false, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter });
+    this.mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(2, 2),
+      new THREE.MeshBasicMaterial({ map: this.target.texture, depthWrite: false, depthTest: false, fog: false, toneMapped: false }),
+    );
     this.mesh.frustumCulled = false;
     this.mesh.renderOrder = -100;
     // Lives just inside the far plane, sized to fill the view.
@@ -107,5 +125,17 @@ export class Sky {
     u.uScroll.value = camera.position.x * 0.004;
     u.uFlash.value = flash;
     u.uAspect.value = camera.aspect;
+  }
+
+  /** Draw the sky into its small target. Call before rendering the scene. */
+  render(renderer: THREE.WebGLRenderer): void {
+    const buf = renderer.getDrawingBufferSize(new THREE.Vector2());
+    const w = Math.max(16, Math.ceil(buf.x / this.downscale));
+    const h = Math.max(8, Math.ceil(buf.y / this.downscale));
+    if (this.target.width !== w || this.target.height !== h) this.target.setSize(w, h);
+    const prev = renderer.getRenderTarget();
+    renderer.setRenderTarget(this.target);
+    renderer.render(this.scene, this.cam);
+    renderer.setRenderTarget(prev);
   }
 }

@@ -104,7 +104,7 @@ The spec is [ASHFALL-Game-Build-Handoff.md](ASHFALL-Game-Build-Handoff.md). This
   - The recorder aborts on any death, so a broken take can't loop silently.
   - Not yet done: entity art is placeholder silhouettes (an asset pass comes later); sound cues are recorded but silent until M5.
 
-- **M5 — Levels L01–L03, audio, title** (code complete, waiting for the owner's iPhone check):
+- **M5 — Levels L01–L03, audio, title** (owner asked to continue, 2026-10-11):
   - Story levels as data files, each following the spec's outline:
     - **L01 The Shelter:** hatch, woods, ditch, crawl, the log bridge over a stream, the cart-to-embankment climb, the highway, the dog and the culvert, the convoy, the rabbit back past the hatch
     - **L02 The Dead Suburb:** the car door over a glowing pool, the crate along the flowerbed onto the bench to reach the porch lever, two searchlight stretches with grass, a wreck and shadow, the marchers, the drawing in a dead-end basement nook
@@ -126,7 +126,19 @@ The spec is [ASHFALL-Game-Build-Handoff.md](ASHFALL-Game-Build-Handoff.md). This
 
 ## In progress
 
-- Waiting for the owner to test M5 on an iPhone: https://cybersecdef.github.io/ashfall/
+- **M6 — Polish and performance.** Steps:
+  - [x] Fewer full-screen passes: vignette, grain, flash and fade merged into one overlay pass. Cheaper sky on lower tiers.
+  - [x] Quality tiers (high, medium, low) driving pixel-ratio cap, ash count, god rays and sky detail. Auto-adapts to frame time with hysteresis; manual override in the debug menu.
+  - [x] Pause the game and audio when the tab or app is hidden
+  - [ ] PWA: manifest (fullscreen, landscape, icons), offline service worker, apple-touch-icon; Android fullscreen and orientation lock on first touch
+  - [x] Measure (`npm run perf`):
+    - GPU at iPhone resolution: a locked 60 fps on high in every scene
+    - software renderer (slow-device proxy): went from 20 fps to 27 fps from the sky and overlay changes alone, then settles on the low tier at a steady 60 fps
+    - the sky's per-pixel fractal noise was the biggest cost (about 15 ms of 49 on the slow path); it now renders at a fraction of screen resolution
+  - Measurement plan was: frame times on the GPU at iPhone resolution (2532×1170) and on a software renderer as a slow-device proxy, to confirm the tiers step down
+  - [ ] Polish: moonlight spilling through the L01 hatch; update the showcase video director for the new sandbox exit
+  - [ ] README: the game, controls, running and testing, architecture, the level schema, and an entity reference generated from the code. A test fails if the reference goes stale.
+  - [ ] Tests, smoke, deploy, hand off
 
 ## Left to do
 
@@ -134,7 +146,7 @@ The spec is [ASHFALL-Game-Build-Handoff.md](ASHFALL-Game-Build-Handoff.md). This
 - [x] M2 — World and depth: all depth layers including the sparse foreground, fog, ash, grain, vignette, camera follow, blue scarf animation
 - [x] M3 — Data-driven levels: level schema with validation, entity registry, triggers, checkpoints, save/continue, `L00` sandbox
 - [x] M4 — Mechanics: tap-to-interact, drag/push/pull, levers and gates, hazards, threats, relay control, death and respawn
-- [x] M5 — Levels L01–L03 (waiting for phone check), playable start to finish, with procedural audio and the title fade-in
+- [x] M5 — Levels L01–L03, playable start to finish, with procedural audio and the title fade-in
 - [ ] M6 — Polish and performance: 60 fps on iPhone, quality tiers, PWA fullscreen, README
 
 ## Open questions

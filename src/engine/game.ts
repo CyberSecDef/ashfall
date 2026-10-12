@@ -23,6 +23,7 @@ import type { Input } from './input';
 import type { Player } from './player';
 import type { Renderer } from './renderer';
 import { LevelRuntime } from './runtime';
+import { QualityController } from './quality';
 import { SaveGame } from './save';
 import { Title } from './title';
 
@@ -47,6 +48,7 @@ export class Game {
   readonly rig: CameraRig;
   readonly audio = new AudioEngine();
   readonly title = new Title();
+  readonly quality = new QualityController();
   /** Endings reached this session (for debug and tests). */
   endings = 0;
   private readonly foley = new Foley((cue, x) => this.audio.play(cue, x));
@@ -150,7 +152,7 @@ export class Game {
     const r = this.renderer;
     r.setPalette(level.palette);
     this.sky.setPalette(level.palette);
-    this.ash.setDensity(level.ambience.ash);
+    this.ash.setDensity(level.ambience.ash * this.quality.settings.ash);
     this.lightning.setFrequency(level.ambience.lightning);
     this.audio.setAmbience(level.ambience);
     this.foley.reset();
@@ -186,6 +188,7 @@ export class Game {
     rt.invulnerable = this.god;
     this.current = rt;
     r.scene.add(rt.group);
+    this.applyQuality();
 
     this.tension = 0;
     const p = rt.child;
@@ -200,6 +203,20 @@ export class Game {
       this.save.reach(level.id, rt.checkpoint);
       const key = `${level.id}:${rt.checkpoint}`;
       if (!this.snapshots.has(key)) this.snapshots.set(key, rt.snapshot());
+    }
+  }
+
+  /** Push the current quality tier into the renderer and effects. */
+  applyQuality(): void {
+    const q = this.quality.settings;
+    const r = this.renderer;
+    r.three.setPixelRatio(Math.min(window.devicePixelRatio || 1, q.pixelRatio));
+    r.resize();
+    this.sky.downscale = q.skyDownscale;
+    this.overlay.grainScale = q.grain;
+    if (this.current) {
+      this.ash.setDensity(this.current.level.ambience.ash * q.ash);
+      for (const g of this.current.world?.godRays ?? []) g.mesh.visible = q.godRays;
     }
   }
 
@@ -253,6 +270,7 @@ export class Game {
   /** Per-frame visuals. */
   frame(dt: number): void {
     this.time += dt;
+    if (this.quality.feed(dt)) this.applyQuality();
     const rt = this.current;
     this.handleTaps();
     const wind = rt.level.ambience.wind;
@@ -277,6 +295,7 @@ export class Game {
     const r = this.renderer;
     this.ash.update(this.time, this.focus, wind, r.three.domElement.height, r.camera.fov, flash);
     this.sky.update(r.camera, this.time, flash);
+    this.sky.render(r.three);
     r.hemi.intensity = this.baseHemi + flash * 1.6;
 
     this.tension += (rt.effects.tension - this.tension) * (1 - Math.exp(-dt * 1.5));

@@ -31,6 +31,14 @@ const menu = (): DebugMenuItem[][] => [
     },
     { label: 'reset save', action: () => game.save.reset() },
     { label: game.audio.muted ? 'sound: off' : 'sound: on', action: () => game.audio.setMuted(!game.audio.muted) },
+    {
+      label: `quality: ${game.quality.mode}${game.quality.mode === 'auto' ? ` (${game.quality.tier})` : ''}`,
+      action: () => {
+        const modes = ['auto', 'high', 'medium', 'low'] as const;
+        game.quality.setMode(modes[(modes.indexOf(game.quality.mode) + 1) % modes.length]);
+        game.applyQuality();
+      },
+    },
   ],
 ];
 const debug = new Debug(document.getElementById('debug')!, renderer.scene, menu);
@@ -54,11 +62,22 @@ game.continueOrStart(PLAY_ORDER[0]);
 let last = performance.now();
 let acc = 0;
 
+// Hidden tab or backgrounded app: stop simulating and silence the audio; resume cleanly.
+document.addEventListener('visibilitychange', () => {
+  const ctx = game.audio.ctx;
+  if (document.hidden) void ctx?.suspend();
+  else {
+    void ctx?.resume();
+    last = performance.now();
+    acc = 0;
+  }
+});
+
 function frame(now: number): void {
   const dt = Math.min((now - last) / 1000, 0.25);
   last = now;
-  // Scripted capture (scripts/record.mjs) steps the game itself, frame by frame.
-  if ((window as unknown as { __ashfallManual?: boolean }).__ashfallManual) {
+  // Scripted capture (scripts/record.mjs) steps the game itself, frame by frame; hidden tabs don't run.
+  if ((window as unknown as { __ashfallManual?: boolean }).__ashfallManual || document.hidden) {
     requestAnimationFrame(frame);
     return;
   }

@@ -120,7 +120,7 @@ export class Debug {
     const on = (b: boolean, c: string) => (b ? c : '·');
     const save = game.save.data;
     this.text.textContent = [
-      `fps  ${this.fps}   dpr ${Math.min(window.devicePixelRatio, 2).toFixed(2)}   ${window.innerWidth}x${window.innerHeight}   draws ${game.sceneDraws}`,
+      `fps  ${this.fps}   frame ${game.quality.ema.toFixed(1)} ms   tier ${game.quality.tier} (${game.quality.mode})   dpr ${game.renderer.three.getPixelRatio()}   ${window.innerWidth}x${window.innerHeight}   draws ${game.sceneDraws}`,
       `${game.level.id} ${game.level.name}   checkpoint ${game.current.checkpoint}/${game.checkpoints.length - 1}   exit x ${game.level.exit.x}`,
       `x ${p.x.toFixed(2)}  y ${p.y.toFixed(2)}  vx ${p.vx.toFixed(2)}  vy ${p.vy.toFixed(2)}  depth ${t.depthAt(p.x).toFixed(2)}`,
       `mode ${p.mode}  grounded ${p.grounded}  surface ${t.surfaceAt(p.x)}  slope ${t.slopeAt(p.x).toFixed(2)}  last fall ${p.lastFall.toFixed(2)} m`,

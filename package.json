@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "smoke": "node scripts/smoke.mjs",
     "validate": "vitest run tests/levels.test.ts",
-    "record": "node scripts/record.mjs"
+    "record": "node scripts/record.mjs",
+    "perf": "node scripts/perf.mjs"
   },
   "dependencies": {
     "three": "^0.186.1",
