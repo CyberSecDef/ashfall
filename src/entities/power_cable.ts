@@ -32,7 +32,7 @@ export const power_cable: EntityDefinition<'power_cable'> = {
       x: spec.x,
       signal(name) {
         pending.push({ signal: name, t: 0 });
-        ctx.sound('hum');
+        ctx.sound('hum', spec.x);
       },
       update(dt) {
         for (let i = pending.length - 1; i >= 0; i--) {

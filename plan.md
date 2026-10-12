@@ -69,7 +69,7 @@ The spec is [ASHFALL-Game-Build-Handoff.md](ASHFALL-Game-Build-Handoff.md). This
   - Fix: exiting into the same level (the sandbox loops to itself) kept the old checkpoint, so a reload resumed near the end. Entering a level now always resets its checkpoint (`save.enter`).
   - Note: Zod adds about 34 KB gzipped to the bundle. M6 can move to `zod/mini` or validate only at build time.
 
-- **M4 — Mechanics** (code complete, waiting for the owner's iPhone check):
+- **M4 — Mechanics** (owner checked it on an iPhone, 2026-10-11):
   - Collision core (`src/engine/collision.ts`):
     - solid boxes: walls, step-ups, scramble targets, ceilings that force a crawl
     - moving solids carry riders
@@ -106,14 +106,34 @@ The spec is [ASHFALL-Game-Build-Handoff.md](ASHFALL-Game-Build-Handoff.md). This
 
 ## In progress
 
-- Waiting for the owner to test M4 on an iPhone: https://cybersecdef.github.io/ashfall/
+- **M5 — Levels L01–L03, audio, title.** Steps:
+  - [x] New mechanics the story levels need, each a new entity type or param, with a test and an L00 sandbox instance:
+    - `hatch`: a shelter lid you push open
+    - `freight_car`: a moving rail car you can jump onto
+    - car-door plank (`draggable_log` look)
+    - radiation `pool` mode (a plank over it keeps you safe)
+    - `heavy` lever that only a relay body can pull
+    - gate `openTo` (a shutter that only lifts enough to crawl under)
+    - guard `alarm` (chases you down)
+    - also fixed: a scramble onto a moving solid (the freight car) now follows it instead of dropping off the back
+  - [ ] Procedural audio (`src/audio/`), Web Audio only, no files:
+    - wind and a per-level drone
+    - surface-aware footsteps, landings, scrambles, crawl rustle
+    - every entity cue, positioned and panned by distance
+    - thunder after lightning, and a tension pad
+    - unlocks on the first touch or key (iOS)
+  - [ ] Title fade-in (the only text in the game) on boot and after the ending
+  - [ ] Endings: after L03, fade to the title and start a new game (memories kept). With all three memories, an epilogue level first (`L04`, the signal).
+  - [ ] L01 The Shelter, L02 The Dead Suburb, L03 The Relay Yard, as level data files per the spec
+  - [ ] Headless playthrough tests: every level completed start to finish with no deaths, memories included. A cue-coverage test: every sound cue fired has a synth.
+  - [ ] Smoke, screenshots, deploy, hand off for the phone check
 
 ## Left to do
 
 - [x] M1 — Scaffold
 - [x] M2 — World and depth: all depth layers including the sparse foreground, fog, ash, grain, vignette, camera follow, blue scarf animation
 - [x] M3 — Data-driven levels: level schema with validation, entity registry, triggers, checkpoints, save/continue, `L00` sandbox
-- [x] M4 — Mechanics (waiting for phone check): tap-to-interact, drag/push/pull, levers and gates, hazards, threats, relay control, death and respawn
+- [x] M4 — Mechanics: tap-to-interact, drag/push/pull, levers and gates, hazards, threats, relay control, death and respawn
 - [ ] M5 — Levels L01–L03, playable start to finish, with procedural audio and the title fade-in
 - [ ] M6 — Polish and performance: 60 fps on iPhone, quality tiers, PWA fullscreen, README
 

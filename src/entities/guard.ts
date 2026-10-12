@@ -17,6 +17,7 @@ export const guard: EntityDefinition<'guard'> = {
     const hi = Math.max(spec.from, spec.to);
     const spotted = spotTimer(0.4);
     let alerted = 0;
+    let chasing = false;
 
     const mat = silhouetteMaterial();
     const g = new THREE.Group();
@@ -46,11 +47,29 @@ export const guard: EntityDefinition<'guard'> = {
       type: 'guard',
       id: spec.id,
       x: spec.x,
-      debug: () => ({ x, dir, pause }),
+      debug: () => ({ x, dir, pause, chasing }),
+      signal(name) {
+        if (name === 'alarm' && !chasing) {
+          chasing = true;
+          ctx.sound('guard_shout', x);
+        }
+      },
       update(dt) {
         const c = ctx.player;
         if (alerted > 0) {
           alerted += dt;
+          return;
+        }
+        if (chasing) {
+          // Running after the child, ignoring cover. Can't climb: the child above him is out of reach.
+          const dx = c.x - x;
+          dir = dx >= 0 ? 1 : -1;
+          x += dir * Math.min(Math.abs(dx), spec.runSpeed * dt);
+          const gy = ctx.terrain.heightAt(x);
+          if (!c.dead && Math.abs(dx) < 0.8 && Math.abs(c.y - gy) < 1.0) {
+            alerted = 0.001;
+            ctx.kill(c, 'caught');
+          }
           return;
         }
         if (pause > 0) {
@@ -68,14 +87,14 @@ export const guard: EntityDefinition<'guard'> = {
         const inView = ahead > -0.3 && ahead < spec.sight && Math.abs(c.y - gy) < 2.2;
         if (spotted(inView && canSeeChild(ctx, x, gy + 1.65), dt)) {
           alerted = 0.001;
-          ctx.sound('guard_shout');
+          ctx.sound('guard_shout', x);
           ctx.kill(c, 'shot');
         }
       },
       frame(dt) {
         const gy = ctx.terrain.heightAt(x);
-        const walking = pause <= 0 && alerted === 0;
-        phase += dt * (walking ? 6 : 0);
+        const walking = (pause <= 0 || chasing) && alerted === 0;
+        phase += dt * (walking ? (chasing ? 11 : 6) : 0);
         g.position.set(x, gy, zAt(ctx, x, 0.05));
         g.scale.x = dir;
         legs[0].rotation.z = Math.sin(phase) * 0.4 * (walking ? 1 : 0);

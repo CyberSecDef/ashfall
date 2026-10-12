@@ -92,8 +92,8 @@ export interface LevelContext {
   /** Grant the relay ability (saved). */
   grantRelay(): void;
   readonly hasRelay: boolean;
-  /** Named sound cue for M5's audio engine. */
-  sound(cue: string): void;
+  /** Play a named sound cue, positioned at x on the path if given (panned and attenuated by distance). */
+  sound(cue: string, x?: number): void;
 }
 
 export interface Entity {

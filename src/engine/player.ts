@@ -126,7 +126,8 @@ export class Player {
   private holdTime = 0;
   private sinceGrounded = 0;
   private jumpLatch = false;
-  private climb: { x0: number; y0: number; x1: number; y1: number; t: number } | null = null;
+  /** Active scramble. `solid` (if climbing onto one) is tracked so a moving car or lift carries the target along. */
+  private climb: { x0: number; y0: number; x1: number; y1: number; t: number; solid: Solid | null; sx: number; sy: number } | null = null;
   private crouched = false;
 
   constructor(
@@ -439,7 +440,7 @@ export class Player {
       if (coll.ceiling(topX - hw, topX + hw, topY + 0.02) - topY < P.height) return false;
       if (coll.overlap(topX - hw, topX + hw, topY + 0.02, topY + P.height)) return false;
     }
-    this.climb = { x0: this.x, y0: this.y, x1: topX, y1: topY, t: 0 };
+    this.climb = { x0: this.x, y0: this.y, x1: topX, y1: topY, t: 0, solid, sx: solid?.minX ?? 0, sy: solid?.maxY ?? 0 };
     this.vx = 0;
     this.vy = 0;
     this.grounded = false;
@@ -449,6 +450,17 @@ export class Player {
 
   private updateClimb(dt: number): void {
     const c = this.climb!;
+    if (c.solid) {
+      // Follow a moving solid: shift the whole climb by however far it has moved.
+      const mx = c.solid.minX - c.sx;
+      const my = c.solid.maxY - c.sy;
+      c.x0 += mx;
+      c.x1 += mx;
+      c.y0 += my;
+      c.y1 += my;
+      c.sx = c.solid.minX;
+      c.sy = c.solid.maxY;
+    }
     c.t = Math.min(1, c.t + dt / this.params.scrambleTime);
     const up = Math.min(1, c.t / 0.65);
     const over = Math.max(0, (c.t - 0.45) / 0.55);

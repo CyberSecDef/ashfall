@@ -22,6 +22,8 @@ import { feral_dog } from './feral_dog';
 import { foreground_prop } from './foreground_prop';
 import { gate } from './gate';
 import { guard } from './guard';
+import { hatch } from './hatch';
+import { freight_car } from './freight_car';
 import { ladder } from './ladder';
 import { lever } from './lever';
 import { lift } from './lift';
@@ -80,6 +82,8 @@ export const registry: { [K in EntityType]: EntityDefinition<K> } = {
   patrol_drone,
   guard,
   cover,
+  hatch,
+  freight_car,
   relay_transmitter,
   dormant_body,
 };

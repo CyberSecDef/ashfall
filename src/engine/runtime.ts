@@ -25,7 +25,7 @@ export const RELAY_RANGE = 9;
 export const RELAY_FLAG = 'relay';
 
 export interface RuntimeHooks {
-  sound(cue: string): void;
+  sound(cue: string, x?: number): void;
   /** The child reached a checkpoint (index into `checkpoints`). */
   checkpoint(index: number): void;
   /** The child walked past the exit. */
@@ -157,7 +157,7 @@ export class LevelRuntime {
       get hasRelay() {
         return save.hasFlag(RELAY_FLAG);
       },
-      sound: (cue) => hooks.sound(cue),
+      sound: (cue, x) => hooks.sound(cue, x),
     };
 
     for (const spec of level.entities) {
@@ -216,7 +216,7 @@ export class LevelRuntime {
       return;
     }
     actor.die();
-    this.hooks.sound(`death_${cause}`);
+    this.hooks.sound(`death_${cause}`, actor.x);
     if (actor === this.child) {
       this.deadFor = 0;
       this.deathCause = cause;

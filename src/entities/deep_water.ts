@@ -25,7 +25,7 @@ export const deep_water: EntityDefinition<'deep_water'> = {
             under.delete(a);
             continue;
           }
-          if (!under.has(a)) ctx.sound('splash_deep');
+          if (!under.has(a)) ctx.sound('splash_deep', a.x);
           const t = (under.get(a) ?? 0) + dt;
           under.set(a, t);
           if (t > spec.drownAfter) ctx.kill(a, 'drown');

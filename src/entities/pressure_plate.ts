@@ -43,7 +43,7 @@ export const pressure_plate: EntityDefinition<'pressure_plate'> = {
         const now = weighed();
         if (now !== pressed) {
           pressed = now;
-          ctx.sound(pressed ? 'plate_down' : 'plate_up');
+          ctx.sound(pressed ? 'plate_down' : 'plate_up', spec.x);
           if (spec.target) ctx.signal(spec.target, pressed ? 'activate' : 'deactivate', spec.id);
         }
       },

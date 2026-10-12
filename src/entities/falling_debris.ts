@@ -35,14 +35,14 @@ export const falling_debris: EntityDefinition<'falling_debris'> = {
       if (state === 'hanging') {
         state = 'shaking';
         t = 0;
-        ctx.sound('creak');
+        ctx.sound('creak', spec.x);
       }
     };
     const land = () => {
       state = 'down';
       y = ground;
       solid.enabled = true;
-      ctx.sound('crash');
+      ctx.sound('crash', spec.x);
       for (const a of ctx.actors) {
         if (!a.dead && Math.abs(a.x - spec.x) < spec.w / 2 + a.params.halfWidth * 0.6 && a.y < ground + spec.h + 0.3) ctx.kill(a, 'crushed');
       }

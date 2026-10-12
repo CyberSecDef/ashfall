@@ -61,7 +61,12 @@ const path: LevelInput['path'] = [
   { x: 237.9, y: -3.5, sharp: true },
   { x: 238, y: 0, sharp: true },
   // Threats and relay (243-350).
-  { x: 350, y: 0 },
+  { x: 349.9, y: 0, sharp: true },
+  // Story set pieces (350-400): a cellar under a hatch, then a rail line.
+  { x: 350, y: -1.0, sharp: true },
+  { x: 355.9, y: -1.0, sharp: true },
+  { x: 356, y: 0, sharp: true, surface: 'gravel' },
+  { x: 400, y: 0, surface: 'gravel' },
 ];
 
 export const L00: LevelInput = {
@@ -161,6 +166,16 @@ export const L00: LevelInput = {
     { type: 'pressure_plate', x: 327, w: 1.4, target: 'gate2' },
     { type: 'gate', id: 'gate2', x: 333 },
     { type: 'dormant_body', x: 338, kind: 'survivor' },
+
+    // ---- story set pieces ----
+    // Drop into the cellar; the hatch over its far end must be pushed open to climb out.
+    { type: 'hatch', x: 355.2, y: 0, w: 1.6 },
+    // The freight car starts rolling as you approach: run, jump on, ride it out.
+    { type: 'freight_car', x: 364, startAt: 359 },
+    // A car door to drag over a glowing pool, and a heavy lever only a relay body can throw.
+    { type: 'dormant_body', x: 345, kind: 'drone' },
+    { type: 'lever', x: 347, heavy: true, target: 'shutter' },
+    { type: 'gate', id: 'shutter', x: 348.6, look: 'shutter', openTo: 0.22 },
   ],
   triggers: [
     { x: 54, w: 2, action: 'signal', target: 'marchers' },
@@ -172,6 +187,6 @@ export const L00: LevelInput = {
     { x: 246, w: 1, action: 'signal', target: 'dog1' },
     { x: 312, w: 1, action: 'tension', amount: 0, once: false },
   ],
-  checkpoints: [44, 68, 96, 116, 140, 162, 206, 243, 263, 278, 291, 314],
-  exit: { x: 346, next: 'L00' },
+  checkpoints: [44, 68, 96, 116, 140, 162, 206, 243, 263, 278, 291, 314, 341],
+  exit: { x: 396, next: 'L00' },
 };

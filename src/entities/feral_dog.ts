@@ -74,7 +74,7 @@ export const feral_dog: EntityDefinition<'feral_dog'> = {
         if (name === 'activate' && state !== 'chase' && !ctx.player.dead) {
           state = 'chase';
           stuck = 0;
-          ctx.sound('dog_bark');
+          ctx.sound('dog_bark', dog.x);
         }
       },
       debug: () => ({ x: dog.x, state }),
@@ -86,7 +86,7 @@ export const feral_dog: EntityDefinition<'feral_dog'> = {
           if (spec.wakeOnSight && Math.abs(dx) < spec.range && canSeeChild(ctx, dog.x, dog.y + 0.5)) {
             state = 'chase';
             stuck = 0;
-            ctx.sound('dog_bark');
+            ctx.sound('dog_bark', dog.x);
           }
         } else if (state === 'chase') {
           if (c.dead) state = 'return';
@@ -99,11 +99,11 @@ export const feral_dog: EntityDefinition<'feral_dog'> = {
           } else stuck = Math.max(0, stuck - dt);
           if (stuck > spec.giveUpAfter || Math.abs(dx) > spec.range * 3) {
             state = 'return';
-            ctx.sound('dog_whine');
+            ctx.sound('dog_whine', dog.x);
           }
           barkAt -= dt;
           if (barkAt <= 0) {
-            ctx.sound('dog_bark');
+            ctx.sound('dog_bark', dog.x);
             barkAt = 1.2 + Math.random();
           }
           // Caught: the child can't be reached inside a crawl-only space (the dog is blocked before it).

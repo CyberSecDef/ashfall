@@ -49,7 +49,7 @@ export const water: EntityDefinition<'water'> = {
           const inside = a.x >= x0 && a.x <= x1 && a.y < surface;
           if (inside && !wet.has(a)) {
             wet.add(a);
-            ctx.sound('splash');
+            ctx.sound('splash', a.x);
           } else if (!inside) wet.delete(a);
         }
       },

@@ -104,7 +104,7 @@ export const memory_collectible: EntityDefinition<'memory_collectible'> = {
           collected = true;
           flare = 1;
           ctx.save.collect(key, ctx.level.id);
-          ctx.sound('memory');
+          ctx.sound('memory', spec.x);
         }
       },
       frame(dt) {

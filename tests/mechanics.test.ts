@@ -321,6 +321,99 @@ describe('relay', () => {
   });
 });
 
+describe('story set pieces', () => {
+  it('a hatch blocks the way out until it is pushed open', () => {
+    const lv = level([{ type: 'hatch', x: 4.2, y: 0, w: 1.6 }], {
+      path: [{ x: -5, y: 0 }, { x: 0, y: 0, sharp: true }, { x: 0.1, y: -1, sharp: true }, { x: 4.9, y: -1, sharp: true }, { x: 5, y: 0, sharp: true }, { x: 60, y: 0 }],
+      spawn: { x: 3 },
+    });
+    const shut = harness(lv);
+    shut.run({ right: true }, 1.5);
+    shut.run({ right: true, up: true }, 0.3);
+    shut.run({ right: true }, 1.5);
+    expect(shut.rt.child.x).toBeLessThan(5);
+    const h = harness(lv);
+    h.run({ right: true }, 0.8);
+    h.tap();
+    expect(h.sounds).toContain('hatch_open');
+    h.run({ right: true }, 1);
+    h.run({ right: true, up: true }, 0.3);
+    h.run({ right: true }, 1.5);
+    expect(h.rt.child.x).toBeGreaterThan(5.2);
+  });
+
+  it('a freight car starts rolling and carries a child who jumps aboard', () => {
+    const h = harness(level([{ type: 'freight_car', id: 'car', x: 12, w: 5, startAt: 5 }]));
+    // Run after it and jump when close to its back end.
+    const car = () => h.rt.byId.get('car')!.debug!().x as number;
+    for (let i = 0; i < 600 && h.rt.child.x < car() - 3.4; i++) h.run({ right: true }, 1 / 60);
+    h.run({ right: true, up: true }, 0.3);
+    h.run({ right: true }, 1.2);
+    expect(h.rt.child.y).toBeCloseTo(1.2, 1);
+    const x = h.rt.child.x;
+    h.run({}, 3);
+    expect(h.rt.child.x).toBeGreaterThan(x + 4);
+    expect(h.sounds).toContain('train_start');
+  });
+
+  it('a plank over a radiation pool keeps the child out of it', () => {
+    const path = [{ x: -5, y: 0 }, { x: 4, y: 0, sharp: true }, { x: 4.1, y: -0.6, sharp: true }, { x: 6.4, y: -0.6, sharp: true }, { x: 6.5, y: 0, sharp: true }, { x: 60, y: 0 }];
+    const wade = harness(level([{ type: 'radiation_zone', x: 4, w: 2.5, pool: true, lethalAfter: 1 }], { path }));
+    wade.rt.child.place(5.2);
+    wade.run({}, 1.5);
+    expect(wade.deaths).toEqual(['radiation']);
+    const bridge = harness(level([{ type: 'radiation_zone', x: 4, w: 2.5, pool: true, lethalAfter: 1 }, { type: 'draggable_log', x: 2.6, look: 'door', w: 2.8, h: 0.12 }], { path }));
+    bridge.rt.child.place(1.05);
+    bridge.run({ right: true, interact: true }, 2.9); // shove the door across the pool
+    bridge.run({ left: true }, 0.2);
+    bridge.run({ right: true }, 4);
+    expect(bridge.deaths).toEqual([]);
+    expect(bridge.rt.child.x).toBeGreaterThan(6.6);
+  });
+
+  it('a heavy lever will not move for the child, but a relay body throws it; the shutter only lifts enough to crawl under', () => {
+    const save = new SaveGame(null);
+    save.setFlag('relay');
+    const h = harness(
+      level([
+        { type: 'dormant_body', x: 2.5 },
+        { type: 'lever', x: 4, heavy: true, target: 's' },
+        { type: 'gate', id: 's', x: 7, look: 'shutter', openTo: 0.22 },
+      ]),
+      { save },
+    );
+    h.rt.child.place(3.5);
+    h.tap();
+    expect(h.sounds).toContain('strain');
+    expect(h.sounds).not.toContain('gate_open');
+    h.rt.child.place(1);
+    h.run({}, 0.1);
+    h.tap(); // take over the body
+    h.run({ right: true }, 0.9);
+    h.tap(); // the body throws the lever
+    expect(h.sounds).toContain('gate_open');
+    h.rt.releaseBody(); // (a tap here would throw the lever back: it's still in reach)
+    h.run({}, 2);
+    h.run({ right: true }, 4);
+    expect(h.rt.child.x).toBeLessThan(6.9); // standing: blocked
+    h.run({ right: true, down: true }, 4);
+    expect(h.rt.child.x).toBeGreaterThan(7.2); // crawled under
+  });
+
+  it('a guard on alarm chases the child down, but cannot reach one up on a car roof', () => {
+    const h = harness(level([{ type: 'guard', id: 'g', x: 2, from: 2, to: 2 }]));
+    h.rt.child.place(6);
+    h.rt.ctx.signal('g', 'alarm');
+    h.run({}, 3);
+    expect(h.deaths).toEqual(['caught']);
+    const safe = harness(level([{ type: 'guard', id: 'g', x: 2, from: 2, to: 2 }, { type: 'obstacle_high', x: 8, w: 3, h: 1.2 }]));
+    safe.rt.child.place(8);
+    safe.rt.ctx.signal('g', 'alarm');
+    safe.run({}, 5);
+    expect(safe.deaths).toEqual([]);
+  });
+});
+
 describe('checkpoint snapshots', () => {
   it('keep a solved puzzle solved after a death', () => {
     const lv = level([

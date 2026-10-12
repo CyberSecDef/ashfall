@@ -100,20 +100,38 @@ export const entityParams = {
   crate: z.object({ w: z.number().positive().default(0.8), h: z.number().positive().default(0.6), mass: z.number().positive().default(1) }),
   /** Rolls a little after a push. */
   cart: z.object({ w: z.number().positive().default(1.3), h: z.number().positive().default(0.6), mass: z.number().positive().default(1.5) }),
-  draggable_log: z.object({ w: z.number().positive().default(2.6), h: z.number().positive().default(0.35), mass: z.number().positive().default(1.4) }),
+  /** A long, low movable: a log, a torn-off car door, a plank. Bridges gaps and pools. */
+  draggable_log: z.object({
+    w: z.number().positive().default(2.6),
+    h: z.number().positive().default(0.35),
+    mass: z.number().positive().default(1.4),
+    look: z.enum(['log', 'door', 'plank']).default('log'),
+  }),
   /** A limp body. Heavy, low; weighs down plates. */
   body: z.object({ w: z.number().positive().default(1.1), h: z.number().positive().default(0.3), mass: z.number().positive().default(1.6) }),
 
   // ---- mechanisms --------------------------------------------------------------
 
   /** Tap to flip: sends 'activate' when on, 'deactivate' when off. */
-  lever: z.object({ on: z.boolean().default(false), once: z.boolean().default(false) }),
+  lever: z.object({
+    on: z.boolean().default(false),
+    once: z.boolean().default(false),
+    /** Too stiff for the child: only a relay body can throw it. */
+    heavy: z.boolean().default(false),
+  }),
   /** Tap to turn: sends 'activate' once, after a slow turn. */
   valve: z.object({ turnTime: z.number().positive().default(1.2) }),
   /** Held down by any actor or box standing on it: 'activate' on press, 'deactivate' on release. */
   pressure_plate: z.object({ w: z.number().positive().default(1) }),
   /** Opens on 'activate', closes on 'deactivate', flips on 'toggle'. */
-  gate: z.object({ w: z.number().positive().default(0.3), h: z.number().positive().default(2.6), open: z.boolean().default(false) }),
+  gate: z.object({
+    w: z.number().positive().default(0.3),
+    h: z.number().positive().default(2.6),
+    open: z.boolean().default(false),
+    /** How far it lifts when open, as a fraction of its height (a shutter that only rises enough to crawl under). */
+    openTo: z.number().min(0.05).max(1).default(0.92),
+    look: z.enum(['bars', 'shutter']).default('bars'),
+  }),
   /** A platform that rises `travel` meters on 'activate' and sinks on 'deactivate', carrying riders. */
   lift: z.object({
     w: z.number().positive().default(1.6),
@@ -129,7 +147,12 @@ export const entityParams = {
   // ---- hazards -----------------------------------------------------------------
 
   /** Glowing fallout: lingering intensifies grain and the Geiger crackle; collapse after `lethalAfter` seconds. */
-  radiation_zone: z.object({ w: z.number().positive(), lethalAfter: z.number().positive().default(3) }),
+  radiation_zone: z.object({
+    w: z.number().positive(),
+    lethalAfter: z.number().positive().default(3),
+    /** A glowing pool filling a dip: only harms what's in it (a plank across keeps you out). */
+    pool: z.boolean().default(false),
+  }),
   /** Rubble that falls on 'activate' (or when the child passes `triggerAt`), killing anything below; it stays as an obstacle. */
   falling_debris: z.object({
     w: z.number().positive().default(1.2),
@@ -165,9 +188,28 @@ export const entityParams = {
   /** Flies between `from` and `to` with a downward light. */
   patrol_drone: z.object({ from: z.number(), to: z.number(), height: z.number().positive().default(3.2), speed: z.number().positive().default(1.3) }),
   /** Walks between `from` and `to`, looking ahead; spotting the child is fatal. */
-  guard: z.object({ from: z.number(), to: z.number(), speed: z.number().positive().default(0.9), sight: z.number().positive().default(7) }),
+  /** On 'alarm' he gives chase at `runSpeed`, regardless of cover. */
+  guard: z.object({
+    from: z.number(),
+    to: z.number(),
+    speed: z.number().positive().default(0.9),
+    sight: z.number().positive().default(7),
+    runSpeed: z.number().positive().default(2.7),
+  }),
   /** Somewhere to hide: tall grass (crawl in it), deep shadow (keep still or crawl), or a wreck (always hidden). */
   cover: z.object({ w: z.number().positive(), kind: z.enum(['grass', 'shadow', 'wreck']).default('grass') }),
+
+  // ---- story set pieces -------------------------------------------------------------
+
+  /** A shelter hatch overhead: tap to push it open. Closed, it is a ceiling. */
+  hatch: z.object({ w: z.number().positive().default(1.6) }),
+  /** A rail freight car. Starts rolling east on 'activate' (or when the child passes `startAt`); jump onto it to ride. */
+  freight_car: z.object({
+    w: z.number().positive().default(5),
+    h: z.number().positive().default(1.2),
+    speed: z.number().positive().default(2.4),
+    startAt: z.number().optional(),
+  }),
 
   // ---- relay ---------------------------------------------------------------------
 
@@ -221,6 +263,8 @@ export const entitySpec = z.discriminatedUnion('type', [
   variant('patrol_drone'),
   variant('guard'),
   variant('cover'),
+  variant('hatch'),
+  variant('freight_car'),
   variant('relay_transmitter'),
   variant('dormant_body'),
 ]);

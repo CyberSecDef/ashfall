@@ -36,7 +36,7 @@ export const relay_transmitter: EntityDefinition<'relay_transmitter'> = {
         if (Math.abs(c.x - spec.x) < 0.4 && Math.abs(c.y - y) < 0.8) {
           taken = true;
           ctx.grantRelay();
-          ctx.sound('relay_found');
+          ctx.sound('relay_found', spec.x);
         }
       },
       frame() {

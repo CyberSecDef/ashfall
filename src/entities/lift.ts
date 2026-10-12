@@ -39,7 +39,7 @@ export const lift: EntityDefinition<'lift'> = {
     ctx.group.add(deck, beam, ...cables);
 
     const set = (v: boolean) => {
-      if (v !== up) ctx.sound('lift_motor');
+      if (v !== up) ctx.sound('lift_motor', spec.x);
       up = v;
     };
 

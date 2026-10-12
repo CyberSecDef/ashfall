@@ -31,7 +31,7 @@ export const valve: EntityDefinition<'valve'> = {
         enabled: () => turning === -1,
         use: () => {
           turning = 0;
-          ctx.sound('valve');
+          ctx.sound('valve', spec.x);
         },
       },
       [mat],

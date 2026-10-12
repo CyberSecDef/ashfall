@@ -41,7 +41,7 @@ export const wire_trap: EntityDefinition<'wire_trap'> = {
           const crossed = (px - spec.x) * (a.x - spec.x) <= 0 && px !== a.x && Math.abs(a.x - px) < 0.5;
           if (!crossed || a.y > y + spec.h) continue;
           tripped = true;
-          ctx.sound('wire_snap');
+          ctx.sound('wire_snap', spec.x);
           if (spec.target) ctx.signal(spec.target, 'activate', spec.id);
           else ctx.kill(a, 'snare');
           return;

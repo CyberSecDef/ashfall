@@ -10,7 +10,8 @@ export const gate: EntityDefinition<'gate'> = {
   create(spec, ctx) {
     const y = entityY(spec, ctx);
     let open = spec.open;
-    let lift = open ? spec.h * 0.92 : 0;
+    const openLift = spec.h * spec.openTo;
+    let lift = open ? openLift : 0;
     const solid = addSolid(ctx, {
       minX: spec.x - spec.w / 2,
       maxX: spec.x + spec.w / 2,
@@ -18,16 +19,28 @@ export const gate: EntityDefinition<'gate'> = {
       maxY: y + spec.h + lift,
       climbable: false,
       tag: 'gate',
-      blocksSight: false,
+      blocksSight: spec.look === 'shutter',
       dx: 0,
       dy: 0,
     });
     const mat = silhouetteMaterial();
     const bars = new THREE.Group();
-    for (let z = -1.1; z <= 0.3; z += 0.16) {
-      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.05, spec.h, 0.05), mat);
-      bar.position.set(0, spec.h / 2, z);
-      bars.add(bar);
+    if (spec.look === 'shutter') {
+      // A corrugated steel shutter: solid, ribbed.
+      const sheet = new THREE.Mesh(new THREE.BoxGeometry(0.08, spec.h, 1.6), mat);
+      sheet.position.set(0, spec.h / 2, -0.4);
+      bars.add(sheet);
+      for (let yy = 0.2; yy < spec.h; yy += 0.25) {
+        const rib = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.04, 1.62), mat);
+        rib.position.set(0, yy, -0.4);
+        bars.add(rib);
+      }
+    } else {
+      for (let z = -1.1; z <= 0.3; z += 0.16) {
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(0.05, spec.h, 0.05), mat);
+        bar.position.set(0, spec.h / 2, z);
+        bars.add(bar);
+      }
     }
     for (const yy of [0.15, spec.h - 0.15]) {
       const rail = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 1.5), mat);
@@ -43,7 +56,7 @@ export const gate: EntityDefinition<'gate'> = {
     ctx.group.add(g, housing);
 
     const set = (v: boolean) => {
-      if (v !== open) ctx.sound(v ? 'gate_open' : 'gate_close');
+      if (v !== open) ctx.sound(v ? 'gate_open' : 'gate_close', spec.x);
       open = v;
     };
 
@@ -57,7 +70,7 @@ export const gate: EntityDefinition<'gate'> = {
         else if (name === 'toggle') set(!open);
       },
       update(dt) {
-        const target = open ? spec.h * 0.92 : 0;
+        const target = open ? openLift : 0;
         const prev = lift;
         lift += Math.sign(target - lift) * Math.min(Math.abs(target - lift), dt * (open ? 1.6 : 2.4));
         // Don't crush: stop closing on anything underneath.
@@ -75,7 +88,7 @@ export const gate: EntityDefinition<'gate'> = {
       snapshot: () => open,
       restore: (s) => {
         open = s as boolean;
-        lift = open ? spec.h * 0.92 : 0;
+        lift = open ? openLift : 0;
         solid.minY = y - 0.05 + lift;
         solid.maxY = y + spec.h + lift;
       },
